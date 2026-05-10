@@ -1,0 +1,110 @@
+﻿@model IEnumerable<WebApplication2.Models.ViewModels.CategoryViewModel>
+@{
+    ViewBag.Title = WebApplication2.Resources.Labels.Categories;
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-tags mr-2"></i>@WebApplication2.Resources.Labels.Categories</span>
+        <a href="/Categories/Create" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>@WebApplication2.Resources.Labels.AddCategory
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="categoriesTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>@WebApplication2.Resources.Labels.CategoryNameEn</th>
+                        <th>@WebApplication2.Resources.Labels.CategoryNameAr</th>
+                        <th>@WebApplication2.Resources.Labels.CategoryDescription</th>
+                        <th>@WebApplication2.Resources.Labels.Name (Products)</th>
+                        <th>@WebApplication2.Resources.Labels.Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                @WebApplication2.Resources.Labels.NoData
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int i = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr id="row-@item.Id">
+                                <td>@i</td>
+                                <td>@item.NameEn</td>
+                                <td>@item.NameAr</td>
+                                <td>@item.Description</td>
+                                <td>
+                                    <span class="badge badge-info">@item.ProductCount</span>
+                                </td>
+                                <td>
+                                    <a href="/Categories/Edit/@item.Id" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-danger"
+                                            onclick="confirmDelete(@item.Id, '@item.NameEn')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: '@WebApplication2.Resources.Labels.ConfirmDelete',
+                text: name,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#1F3864',
+                confirmButtonText: '@WebApplication2.Resources.Labels.Yes',
+                cancelButtonText: '@WebApplication2.Resources.Labels.Cancel'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Categories/Delete/' + id,
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                $('#row-' + id).fadeOut(400, function () { $(this).remove(); });
+                                Swal.fire({
+                                    title: response.message,
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: response.message,
+                                    icon: 'error'
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

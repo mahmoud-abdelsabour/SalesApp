@@ -1,0 +1,89 @@
+﻿@model WebApplication2.Models.ViewModels.ProductViewModel
+@{
+    ViewBag.Title = WebApplication2.Resources.Labels.AddProduct;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-plus mr-2"></i>@WebApplication2.Resources.Labels.AddProduct
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("Create", "Products", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationSummary(false)
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.ProductCategory <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.CategoryId,
+                            Model.Categories,
+                            WebApplication2.Resources.Labels.SelectCategory,
+                            new { @class = "form-control select2" })
+                        @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.ProductNameEn <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.NameEn, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.NameEn, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.ProductNameAr <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.NameAr, new { @class = "form-control", dir = "rtl" })
+                        @Html.ValidationMessageFor(m => m.NameAr, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>@WebApplication2.Resources.Labels.ProductPrice <span class="text-danger">*</span></label>
+                                @Html.TextBoxFor(m => m.Price, new { @class = "form-control", type = "number", step = "0.01", min = "0.01" })
+                                @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger small" })
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>@WebApplication2.Resources.Labels.ProductStock</label>
+                                @Html.TextBoxFor(m => m.StockQuantity, new { @class = "form-control", type = "number", min = "0" })
+                                @Html.ValidationMessageFor(m => m.StockQuantity, "", new { @class = "text-danger small" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.ProductDescription</label>
+                        @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3" })
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="/Products/Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i>@WebApplication2.Resources.Labels.Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-1"></i>@WebApplication2.Resources.Labels.Save
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.select2').select2({
+                placeholder: '@WebApplication2.Resources.Labels.SelectCategory'
+            });
+        });
+    </script>
+}

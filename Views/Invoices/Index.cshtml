@@ -1,0 +1,131 @@
+﻿@model IEnumerable<WebApplication2.Models.ViewModels.InvoiceListViewModel>
+@{
+    ViewBag.Title = WebApplication2.Resources.Labels.Invoices;
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-list mr-2"></i>@WebApplication2.Resources.Labels.Invoices</span>
+        <a href="/Invoices/Create" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>@WebApplication2.Resources.Labels.CreateInvoice
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>@WebApplication2.Resources.Labels.InvoiceNumber</th>
+                        <th>@WebApplication2.Resources.Labels.InvoiceCustomer</th>
+                        <th>@WebApplication2.Resources.Labels.InvoiceDate</th>
+                        <th>@WebApplication2.Resources.Labels.InvoiceTotal</th>
+                        <th>@WebApplication2.Resources.Labels.InvoiceStatus</th>
+                        <th>@WebApplication2.Resources.Labels.Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                @WebApplication2.Resources.Labels.NoData
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int i = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr id="row-@item.Id">
+                                <td>@i</td>
+                                <td>
+                                    <a href="/Invoices/Details/@item.Id">
+                                        @item.InvoiceNumber
+                                    </a>
+                                </td>
+                                <td>@item.CustomerName</td>
+                                <td>@item.InvoiceDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td><strong>@item.TotalAmount.ToString("N2")</strong></td>
+                                <td>
+                                    @if (item.Status == "Confirmed")
+                                    {
+                                        <span class="badge badge-success">@item.Status</span>
+                                    }
+                                    else if (item.Status == "Cancelled")
+                                    {
+                                        <span class="badge badge-danger">@item.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-warning">@item.Status</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="/Invoices/Details/@item.Id" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (item.Status != "Cancelled")
+                                    {
+                                        <button class="btn btn-sm btn-danger"
+                                                onclick="confirmCancel(@item.Id, '@item.InvoiceNumber')">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        function confirmCancel(id, number) {
+            Swal.fire({
+                title: 'Cancel Invoice?',
+                text: 'Invoice: ' + number,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#1F3864',
+                confirmButtonText: 'Yes, Cancel It',
+                cancelButtonText: '@WebApplication2.Resources.Labels.Cancel'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Invoices/Cancel/' + id,
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: response.message,
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(function () {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: response.message,
+                                    icon: 'error'
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

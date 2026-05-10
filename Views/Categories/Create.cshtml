@@ -1,0 +1,59 @@
+﻿@model WebApplication2.Models.ViewModels.CategoryViewModel
+@{
+    ViewBag.Title = WebApplication2.Resources.Labels.AddCategory;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-plus mr-2"></i>@WebApplication2.Resources.Labels.AddCategory
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("Create", "Categories", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationSummary(false)
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CategoryNameEn <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.NameEn, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.NameEn, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CategoryNameAr <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.NameAr, new { @class = "form-control", dir = "rtl" })
+                        @Html.ValidationMessageFor(m => m.NameAr, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CategoryDescription</label>
+                        @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3" })
+                        @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="/Categories/Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i>@WebApplication2.Resources.Labels.Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-1"></i>@WebApplication2.Resources.Labels.Save
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+}

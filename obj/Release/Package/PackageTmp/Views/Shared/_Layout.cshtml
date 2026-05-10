@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html lang="@(WebApplication2.Helpers.LanguageHelper.IsArabic() ? "ar" : "en")"
+      dir="@(WebApplication2.Helpers.LanguageHelper.IsArabic() ? "rtl" : "ltr")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - @WebApplication2.Resources.Labels.AppName</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.3/sweetalert2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: #f0f4f8;
+        }
+
+        .navbar {
+            background: #1F3864 !important;
+        }
+
+        .navbar-brand, .nav-link, .navbar-text {
+            color: #fff !important;
+        }
+
+            .nav-link:hover {
+                color: #aac4f0 !important;
+            }
+
+        .main-content {
+            padding: 30px 20px;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            border: none;
+        }
+
+        .card-header {
+            background: #1F3864;
+            color: #fff;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #1F3864;
+            border-color: #1F3864;
+        }
+
+            .btn-primary:hover {
+                background: #2E5FA3;
+                border-color: #2E5FA3;
+            }
+
+        .table thead th {
+            background: #f0f4f8;
+            color: #1F3864;
+            font-weight: 600;
+        }
+
+        .alert-success-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 280px;
+        }
+
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255%2c255%2c255%2c1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+    </style>
+    @if (WebApplication2.Helpers.LanguageHelper.IsArabic())
+    {
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+            }
+
+            .navbar-nav {
+                flex-direction: row-reverse;
+            }
+
+            .ml-auto {
+                margin-left: 0 !important;
+                margin-right: auto !important;
+            }
+
+            .text-right-ar {
+                text-align: right;
+            }
+
+            .table {
+                direction: rtl;
+            }
+
+                .table thead th, .table tbody td {
+                    text-align: right;
+                }
+
+            .card-header {
+                text-align: right;
+            }
+
+            .form-group label {
+                float: right;
+                width: 100%;
+                text-align: right;
+            }
+        </style>
+    }
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand font-weight-bold" href="/">
+            <i class="fas fa-chart-line mr-2"></i>@WebApplication2.Resources.Labels.AppName
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon" ></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/Home/Index">
+                        <i class="fas fa-home mr-1"></i>@WebApplication2.Resources.Labels.Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Categories/Index">
+                        <i class="fas fa-tags mr-1"></i>@WebApplication2.Resources.Labels.Categories
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Products/Index">
+                        <i class="fas fa-box mr-1"></i>@WebApplication2.Resources.Labels.Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Customers/Index">
+                        <i class="fas fa-users mr-1"></i>@WebApplication2.Resources.Labels.Customers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Invoices/Create">
+                        <i class="fas fa-file-invoice mr-1"></i>@WebApplication2.Resources.Labels.CreateInvoice
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Invoices/Index">
+                        <i class="fas fa-list mr-1"></i>@WebApplication2.Resources.Labels.Invoices
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                        <i class="fas fa-user mr-1"></i>@User.Identity.Name
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        @if (WebApplication2.Helpers.LanguageHelper.IsArabic())
+                        {
+                            <a class="dropdown-item" href="/Auth/SetLanguage?lang=en">
+                                <i class="fas fa-globe mr-2"></i>English
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="dropdown-item" href="/Auth/SetLanguage?lang=ar">
+                                <i class="fas fa-globe mr-2"></i>العربية
+                            </a>
+                        }
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="/Auth/Logout">
+                            <i class="fas fa-sign-out-alt mr-2"></i>@WebApplication2.Resources.Labels.Logout
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-fluid main-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle mr-2"></i>@TempData["Success"]
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle mr-2"></i>@TempData["Error"]
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        }
+        @RenderBody()
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.3/sweetalert2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        // Idle timeout
+        var idleTime = 0;
+        var warningShown = false;
+        var idleInterval = setInterval(timerIncrement, 60000);
+
+        $(document).on('mousemove keydown click scroll', function () {
+            if (!warningShown) idleTime = 0;
+        });
+
+        function timerIncrement() {
+            if (warningShown) return;
+            idleTime++;
+            if (idleTime >= 2) showIdleWarning();
+        }
+
+        function showIdleWarning() {
+            warningShown = true;
+            Swal.fire({
+                title: '@WebApplication2.Resources.Labels.IdleWarning',
+                text: '@WebApplication2.Resources.Labels.IdleMessage',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '@WebApplication2.Resources.Labels.ContinueSession',
+                cancelButtonText: '@WebApplication2.Resources.Labels.Logout',
+                confirmButtonColor: '#1F3864',
+                cancelButtonColor: '#d33',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.post('/Auth/KeepAlive');
+                    idleTime = 0;
+                    warningShown = false;
+                } else {
+                    window.location.href = '/Auth/Logout';
+                }
+            });
+        }
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

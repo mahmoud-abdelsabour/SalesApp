@@ -1,0 +1,150 @@
+﻿@{
+    ViewBag.Title = WebApplication2.Resources.Labels.Dashboard;
+}
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-tags fa-2x text-primary mb-2"></i>
+                <h4 class="font-weight-bold">@ViewBag.TotalCategories</h4>
+                <p class="text-muted mb-0">@WebApplication2.Resources.Labels.Categories</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-box fa-2x text-success mb-2"></i>
+                <h4 class="font-weight-bold">@ViewBag.TotalProducts</h4>
+                <p class="text-muted mb-0">@WebApplication2.Resources.Labels.Products</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                <h4 class="font-weight-bold">@ViewBag.TotalCustomers</h4>
+                <p class="text-muted mb-0">@WebApplication2.Resources.Labels.Customers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-file-invoice fa-2x text-danger mb-2"></i>
+                <h4 class="font-weight-bold">@ViewBag.TotalInvoices</h4>
+                <p class="text-muted mb-0">@WebApplication2.Resources.Labels.Invoices</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                <h3 class="font-weight-bold">@((decimal)ViewBag.TotalRevenue).ToString("N2")</h3>
+                <p class="text-muted mb-0">Total Confirmed Revenue</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Icons Grid -->
+<!--
+    Desktop order: Home(1), CreateInvoice(2), Invoices(3), Customers(4), Products(5), Categories(6)
+    Mobile order:  CreateInvoice(1), Invoices(2), Customers(3), Products(4), Home(5), Categories(6)
+-->
+<div class="row">
+
+    <!-- Create Invoice: mobile=1st, desktop=2nd -->
+    <div class="col-6 col-md-4 mb-4 order-1 order-md-2">
+        <a href="/Invoices/Create" class="text-decoration-none">
+            <div class="card text-center h-100 icon-card">
+                <div class="card-body">
+                    <i class="fas fa-file-invoice fa-3x text-primary mb-3"></i>
+                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.CreateInvoice</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Invoices List: mobile=2nd, desktop=3rd -->
+    <div class="col-6 col-md-4 mb-4 order-2 order-md-3">
+        <a href="/Invoices/Index" class="text-decoration-none">
+            <div class="card text-center h-100 icon-card">
+                <div class="card-body">
+                    <i class="fas fa-list fa-3x text-success mb-3"></i>
+                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Invoices</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Customers: mobile=3rd, desktop=4th -->
+    <div class="col-6 col-md-4 mb-4 order-3 order-md-4">
+        <a href="/Customers/Index" class="text-decoration-none">
+            <div class="card text-center h-100 icon-card">
+                <div class="card-body">
+                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Customers</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Products: mobile=4th, desktop=5th -->
+    <div class="col-6 col-md-4 mb-4 order-4 order-md-5">
+        <a href="/Products/Index" class="text-decoration-none">
+            <div class="card text-center h-100 icon-card">
+                <div class="card-body">
+                    <i class="fas fa-box fa-3x text-info mb-3"></i>
+                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Products</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Home/Dashboard: mobile=5th, desktop=1st -->
+    <div class="col-6 col-md-4 mb-4 order-5 order-md-1">
+        <a href="/Home/Index" class="text-decoration-none">
+            <div class="card text-center h-100 icon-card">
+                <div class="card-body">
+                    <i class="fas fa-home fa-3x text-secondary mb-3"></i>
+                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Dashboard</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Categories: mobile=6th, desktop=6th -->
+    <div class="col-6 col-md-4 mb-4 order-6 order-md-6">
+        <a href="/Categories/Index" class="text-decoration-none">
+            <div class="card text-center h-100 icon-card">
+                <div class="card-body">
+                    <i class="fas fa-tags fa-3x text-danger mb-3"></i>
+                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Categories</h6>
+                </div>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<style>
+    .icon-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        border-radius: 12px;
+    }
+
+        .icon-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+</style>

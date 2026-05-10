@@ -1,0 +1,64 @@
+﻿@model WebApplication2.Models.ViewModels.CustomerViewModel
+@{
+    ViewBag.Title = WebApplication2.Resources.Labels.AddCustomer;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-plus mr-2"></i>@WebApplication2.Resources.Labels.AddCustomer
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("Create", "Customers", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationSummary(false)
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CustomerFullName <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.FullName, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CustomerPhone <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.Phone, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Phone, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CustomerEmail</label>
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="form-group">
+                        <label>@WebApplication2.Resources.Labels.CustomerAddress</label>
+                        @Html.TextAreaFor(m => m.Address, new { @class = "form-control", rows = "3" })
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="/Customers/Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i>@WebApplication2.Resources.Labels.Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-1"></i>@WebApplication2.Resources.Labels.Save
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+}
