@@ -159,6 +159,9 @@
   <data name="CategoryNameEn" xml:space="preserve">
     <value>الاسم (إنجليزي)</value>
   </data>
+  <data name="ClearFilter" xml:space="preserve">
+    <value>مسح</value>
+  </data>
   <data name="ConfirmDelete" xml:space="preserve">
     <value>هل أنت متأكد أنك تريد حذف هذا العنصر؟</value>
   </data>
@@ -203,6 +206,27 @@
   </data>
   <data name="EditProduct" xml:space="preserve">
     <value>تعديل منتج</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="FilterCancelled" xml:space="preserve">
+    <value>ملغي</value>
+  </data>
+  <data name="FilterConfirmed" xml:space="preserve">
+    <value>مؤكد</value>
+  </data>
+  <data name="FilterDateFrom" xml:space="preserve">
+    <value>من تاريخ</value>
+  </data>
+  <data name="FilterDateTo" xml:space="preserve">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="FilterStatus" xml:space="preserve">
+    <value>الحالة</value>
   </data>
   <data name="IdleMessage" xml:space="preserve">
     <value>لقد كنت غير نشط لمدة دقيقتين. هل تريد الاستمرار؟</value>

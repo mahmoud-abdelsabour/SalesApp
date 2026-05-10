@@ -11,6 +11,44 @@
         </a>
     </div>
     <div class="card-body">
+
+        <!-- Filter Row -->
+        @using (Html.BeginForm("Index", "Invoices", FormMethod.Get))
+        {
+            <div class="row mb-3">
+                <div class="col-md-2">
+                    <label class="small">@WebApplication2.Resources.Labels.FilterDateFrom</label>
+                    <input type="date" name="dateFrom" value="@ViewBag.DateFrom" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="small">@WebApplication2.Resources.Labels.FilterDateTo</label>
+                    <input type="date" name="dateTo" value="@ViewBag.DateTo" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-3">
+                    <label class="small">@WebApplication2.Resources.Labels.InvoiceCustomer</label>
+                    <select name="customerId" id="customerFilter" class="form-control form-control-sm" style="width:100%">
+                        <option value="">@WebApplication2.Resources.Labels.FilterAll</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="small">@WebApplication2.Resources.Labels.FilterStatus</label>
+                    <select name="status" class="form-control form-control-sm">
+                        <option value="">@WebApplication2.Resources.Labels.FilterAll</option>
+                        <option value="Confirmed" @(ViewBag.Status == "Confirmed" ? "selected" : "")>@WebApplication2.Resources.Labels.FilterConfirmed</option>
+                        <option value="Cancelled" @(ViewBag.Status == "Cancelled" ? "selected" : "")>@WebApplication2.Resources.Labels.FilterCancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm mr-2">
+                        <i class="fas fa-search mr-1"></i>@WebApplication2.Resources.Labels.Filter
+                    </button>
+                    <a href="/Invoices/Index" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-times mr-1"></i>@WebApplication2.Resources.Labels.ClearFilter
+                    </a>
+                </div>
+            </div>
+        }
+
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -41,13 +79,11 @@
                             <tr id="row-@item.Id">
                                 <td>@i</td>
                                 <td>
-                                    <a href="/Invoices/Details/@item.Id">
-                                        @item.InvoiceNumber
-                                    </a>
+                                    <a href="/Invoices/Details/@item.Id">@item.InvoiceNumber</a>
                                 </td>
                                 <td>@item.CustomerName</td>
                                 <td>@item.InvoiceDate.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td><strong>@item.TotalAmount.ToString("N2")</strong></td>
+                                <td>@item.TotalAmount.ToString("N2")</td>
                                 <td>
                                     @if (item.Status == "Confirmed")
                                     {
@@ -89,10 +125,38 @@
 
 @section Scripts {
     <script>
+        $(document).ready(function () {
+            // Initialize customer filter Select2 with AJAX
+            $('#customerFilter').select2({
+                placeholder: '@WebApplication2.Resources.Labels.FilterAll',
+                allowClear: true,
+                ajax: {
+                    url: '/Customers/Search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) { return { term: params.term || '' }; },
+                    processResults: function (data) { return { results: data }; }
+                }
+            });
+
+            // Pre-select customer if filter is active
+            var selectedCustomerId = '@ViewBag.CustomerId';
+            if (selectedCustomerId) {
+                $.get('/Customers/Search?term=', function (data) {
+                    $.each(data, function (i, customer) {
+                        if (customer.id == selectedCustomerId) {
+                            var option = new Option(customer.text, customer.id, true, true);
+                            $('#customerFilter').append(option).trigger('change');
+                        }
+                    });
+                });
+            }
+        });
+
         function confirmCancel(id, number) {
             Swal.fire({
                 title: 'Cancel Invoice?',
-                text: 'Invoice: ' + number,
+                text: 'Invoice ' + number + ' will be cancelled.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -114,14 +178,9 @@
                                     icon: 'success',
                                     timer: 1500,
                                     showConfirmButton: false
-                                }).then(function () {
-                                    location.reload();
-                                });
+                                }).then(function () { location.reload(); });
                             } else {
-                                Swal.fire({
-                                    title: response.message,
-                                    icon: 'error'
-                                });
+                                Swal.fire({ title: response.message, icon: 'error' });
                             }
                         }
                     });

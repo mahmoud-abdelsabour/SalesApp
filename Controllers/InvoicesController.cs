@@ -16,11 +16,37 @@ namespace WebApplication2.Controllers
         private AppDbContext db = new AppDbContext();
 
         // GET: Invoices
-        public ActionResult Index(int page = 1)
+        public ActionResult Index(int page = 1, string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
         {
             int pageSize = 20;
 
-            var query = db.Invoices
+            var query = db.Invoices.AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(dateFrom))
+            {
+                DateTime from;
+                if (DateTime.TryParse(dateFrom, out from))
+                    query = query.Where(i => i.InvoiceDate >= from);
+            }
+
+            if (!string.IsNullOrEmpty(dateTo))
+            {
+                DateTime to;
+                if (DateTime.TryParse(dateTo, out to))
+                {
+                    DateTime toEndOfDay = to.AddDays(1);
+                    query = query.Where(i => i.InvoiceDate <= toEndOfDay);
+                }
+            }
+
+            if (customerId.HasValue)
+                query = query.Where(i => i.CustomerId == customerId.Value);
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(i => i.Status == status);
+
+            var projected = query
                 .Select(i => new InvoiceListViewModel
                 {
                     Id = i.Id,
@@ -32,17 +58,23 @@ namespace WebApplication2.Controllers
                 })
                 .OrderByDescending(i => i.InvoiceDate);
 
-            int totalRecords = query.Count();
+            int totalRecords = projected.Count();
             int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
 
-            var invoices = query
+            var invoices = projected
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
-            ViewBag.RouteValues = new { };
+            ViewBag.RouteValues = new { dateFrom, dateTo, customerId, status };
+
+            // Keep filter values for form
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
+            ViewBag.CustomerId = customerId;
+            ViewBag.Status = status;
 
             return View(invoices);
         }
