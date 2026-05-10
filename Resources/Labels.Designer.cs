@@ -115,6 +115,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add User.
+        /// </summary>
+        public static string AddUser {
+            get {
+                return ResourceManager.GetString("AddUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This account is already logged in from another device.
         /// </summary>
         public static string AlreadyLoggedIn {
@@ -138,6 +147,15 @@ namespace WebApplication2.Resources {
         public static string Cancel {
             get {
                 return ResourceManager.GetString("Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot deactivate the last active user.
+        /// </summary>
+        public static string CannotDeactivateLastAdmin {
+            get {
+                return ResourceManager.GetString("CannotDeactivateLastAdmin", resourceCulture);
             }
         }
         
@@ -327,6 +345,15 @@ namespace WebApplication2.Resources {
         public static string EditProduct {
             get {
                 return ResourceManager.GetString("EditProduct", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit User.
+        /// </summary>
+        public static string EditUser {
+            get {
+                return ResourceManager.GetString("EditUser", resourceCulture);
             }
         }
         
@@ -646,6 +673,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New Password.
+        /// </summary>
+        public static string NewPassword {
+            get {
+                return ResourceManager.GetString("NewPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No.
         /// </summary>
         public static string No {
@@ -763,6 +799,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reset Password.
+        /// </summary>
+        public static string ResetPassword {
+            get {
+                return ResourceManager.GetString("ResetPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Save.
         /// </summary>
         public static string Save {
@@ -835,11 +880,83 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to User deactivated successfully.
+        /// </summary>
+        public static string UserDeactivated {
+            get {
+                return ResourceManager.GetString("UserDeactivated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Email.
+        /// </summary>
+        public static string UserEmail {
+            get {
+                return ResourceManager.GetString("UserEmail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Full Name.
+        /// </summary>
+        public static string UserFullName {
+            get {
+                return ResourceManager.GetString("UserFullName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Active.
+        /// </summary>
+        public static string UserIsActive {
+            get {
+                return ResourceManager.GetString("UserIsActive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Username.
         /// </summary>
         public static string Username {
             get {
                 return ResourceManager.GetString("Username", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Username already exists.
+        /// </summary>
+        public static string UsernameDuplicate {
+            get {
+                return ResourceManager.GetString("UsernameDuplicate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Password.
+        /// </summary>
+        public static string UserPassword {
+            get {
+                return ResourceManager.GetString("UserPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Users.
+        /// </summary>
+        public static string Users {
+            get {
+                return ResourceManager.GetString("Users", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Username.
+        /// </summary>
+        public static string UserUsername {
+            get {
+                return ResourceManager.GetString("UserUsername", resourceCulture);
             }
         }
         

@@ -135,6 +135,9 @@
   <data name="AddProduct" xml:space="preserve">
     <value>Add Product</value>
   </data>
+  <data name="AddUser" xml:space="preserve">
+    <value>Add User</value>
+  </data>
   <data name="AlreadyLoggedIn" xml:space="preserve">
     <value>This account is already logged in from another device</value>
   </data>
@@ -143,6 +146,9 @@
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="CannotDeactivateLastAdmin" xml:space="preserve">
+    <value>Cannot deactivate the last active user</value>
   </data>
   <data name="Categories" xml:space="preserve">
     <value>Categories</value>
@@ -206,6 +212,9 @@
   </data>
   <data name="EditProduct" xml:space="preserve">
     <value>Edit Product</value>
+  </data>
+  <data name="EditUser" xml:space="preserve">
+    <value>Edit User</value>
   </data>
   <data name="Filter" xml:space="preserve">
     <value>Filter</value>
@@ -312,6 +321,9 @@
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>New Password</value>
+  </data>
   <data name="No" xml:space="preserve">
     <value>No</value>
   </data>
@@ -351,6 +363,9 @@
   <data name="RemoveLine" xml:space="preserve">
     <value>Remove</value>
   </data>
+  <data name="ResetPassword" xml:space="preserve">
+    <value>Reset Password</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
@@ -375,7 +390,31 @@
   <data name="Stock" xml:space="preserve">
     <value>Stock</value>
   </data>
+  <data name="UserDeactivated" xml:space="preserve">
+    <value>User deactivated successfully</value>
+  </data>
+  <data name="UserEmail" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="UserFullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="UserIsActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
   <data name="Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="UsernameDuplicate" xml:space="preserve">
+    <value>Username already exists</value>
+  </data>
+  <data name="UserPassword" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="UserUsername" xml:space="preserve">
     <value>Username</value>
   </data>
   <data name="Yes" xml:space="preserve">

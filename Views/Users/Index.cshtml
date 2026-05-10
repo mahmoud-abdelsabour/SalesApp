@@ -1,0 +1,115 @@
+﻿@model IEnumerable<WebApplication2.Models.ViewModels.UserViewModel>
+@{
+    ViewBag.Title = WebApplication2.Resources.Labels.Users;
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-user-cog mr-2"></i>@WebApplication2.Resources.Labels.Users</span>
+        <a href="/Users/Create" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>@WebApplication2.Resources.Labels.AddUser
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>@WebApplication2.Resources.Labels.UserUsername</th>
+                        <th>@WebApplication2.Resources.Labels.UserFullName</th>
+                        <th>@WebApplication2.Resources.Labels.UserEmail</th>
+                        <th>@WebApplication2.Resources.Labels.UserIsActive</th>
+                        <th>@WebApplication2.Resources.Labels.Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                @WebApplication2.Resources.Labels.NoData
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int i = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr id="row-@item.Id">
+                                <td>@i</td>
+                                <td>@item.Username</td>
+                                <td>@item.FullName</td>
+                                <td>@item.Email</td>
+                                <td>
+                                    <span class="badge @(item.IsActive ? "badge-success" : "badge-secondary")">
+                                        @(item.IsActive ? WebApplication2.Resources.Labels.Active : WebApplication2.Resources.Labels.Inactive)
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="/Users/Edit/@item.Id" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/Users/ResetPassword/@item.Id" class="btn btn-sm btn-info">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                    <button class="btn btn-sm @(item.IsActive ? "btn-danger" : "btn-success")"
+                                            onclick="toggleActive(@item.Id, '@item.Username', @item.IsActive.ToString().ToLower())">
+                                        <i class="fas @(item.IsActive ? "fa-user-slash" : "fa-user-check")"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        function toggleActive(id, username, isActive) {
+            var action = isActive ? 'Deactivate' : 'Activate';
+            Swal.fire({
+                title: action + ' ' + username + '?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: isActive ? '#d33' : '#2D9B6F',
+                cancelButtonColor: '#1F3864',
+                confirmButtonText: 'Yes',
+                cancelButtonText: '@WebApplication2.Resources.Labels.Cancel'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Users/ToggleActive/' + id,
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                if (response.signOut) {
+                                    window.location.href = '/Auth/Logout';
+                                } else {
+                                    Swal.fire({
+                                        title: response.message,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(function () { location.reload(); });
+                                }
+                            } else {
+                                Swal.fire({ title: response.message, icon: 'error' });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

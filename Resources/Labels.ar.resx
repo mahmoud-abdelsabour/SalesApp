@@ -135,6 +135,9 @@
   <data name="AddProduct" xml:space="preserve">
     <value>إضافة منتج</value>
   </data>
+  <data name="AddUser" xml:space="preserve">
+    <value>إضافة مستخدم</value>
+  </data>
   <data name="AlreadyLoggedIn" xml:space="preserve">
     <value>هذا الحساب مسجل دخوله من جهاز آخر</value>
   </data>
@@ -143,6 +146,9 @@
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>إلغاء</value>
+  </data>
+  <data name="CannotDeactivateLastAdmin" xml:space="preserve">
+    <value>لا يمكن تعطيل آخر مستخدم نشط</value>
   </data>
   <data name="Categories" xml:space="preserve">
     <value>الفئات</value>
@@ -206,6 +212,9 @@
   </data>
   <data name="EditProduct" xml:space="preserve">
     <value>تعديل منتج</value>
+  </data>
+  <data name="EditUser" xml:space="preserve">
+    <value>تعديل مستخدم</value>
   </data>
   <data name="Filter" xml:space="preserve">
     <value>بحث</value>
@@ -312,6 +321,9 @@
   <data name="Name" xml:space="preserve">
     <value>الاسم</value>
   </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>كلمة المرور الجديدة</value>
+  </data>
   <data name="No" xml:space="preserve">
     <value>لا</value>
   </data>
@@ -351,6 +363,9 @@
   <data name="RemoveLine" xml:space="preserve">
     <value>حذف</value>
   </data>
+  <data name="ResetPassword" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>حفظ</value>
   </data>
@@ -375,7 +390,31 @@
   <data name="Stock" xml:space="preserve">
     <value>المخزن</value>
   </data>
+  <data name="UserDeactivated" xml:space="preserve">
+    <value>تم تعطيل المستخدم بنجاح</value>
+  </data>
+  <data name="UserEmail" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="UserFullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="UserIsActive" xml:space="preserve">
+    <value>نشط</value>
+  </data>
   <data name="Username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="UsernameDuplicate" xml:space="preserve">
+    <value>اسم المستخدم موجود مسبقاً</value>
+  </data>
+  <data name="UserPassword" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="UserUsername" xml:space="preserve">
     <value>اسم المستخدم</value>
   </data>
   <data name="Yes" xml:space="preserve">
