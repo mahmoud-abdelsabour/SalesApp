@@ -163,6 +163,23 @@ namespace WebApplication2.Controllers
                         if (product == null || !product.IsActive)
                         {
                             ModelState.AddModelError("", "Product not found: " + item.ProductId);
+                            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
+                            return View(model);
+                        }
+
+                        // Stock validation
+                        if (item.Quantity <= 0)
+                        {
+                            ModelState.AddModelError("", Resources.Labels.InvoiceInvalidQty);
+                            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
+                            return View(model);
+                        }
+
+                        if (item.Quantity > product.StockQuantity)
+                        {
+                            ModelState.AddModelError("", product.NameEn + ": " + Resources.Labels.InvoiceExceedsStock +
+                                " (Available: " + product.StockQuantity + ")");
+                            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
                             return View(model);
                         }
 
@@ -199,6 +216,18 @@ namespace WebApplication2.Controllers
                         item.InvoiceId = invoice.Id;
 
                     db.InvoiceItems.AddRange(invoiceItems);
+                    db.SaveChanges();
+
+                    // Deduct stock for each product
+                    foreach (var item in invoiceItems)
+                    {
+                        var product = db.Products.Find(item.ProductId);
+                        if (product != null)
+                        {
+                            product.StockQuantity -= item.Quantity;
+                            if (product.StockQuantity < 0) product.StockQuantity = 0;
+                        }
+                    }
                     db.SaveChanges();
 
                     transaction.Commit();
@@ -267,7 +296,8 @@ namespace WebApplication2.Controllers
                 {
                     id = p.Id,
                     text = p.NameEn,
-                    price = p.Price
+                    price = p.Price,
+                    stock = p.StockQuantity
                 })
                 .OrderBy(p => p.text)
                 .ToList();

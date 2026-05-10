@@ -66,6 +66,7 @@
                         <tr>
                             <th>@WebApplication2.Resources.Labels.InvoiceProducts</th>
                             <th style="width:100px">@WebApplication2.Resources.Labels.InvoiceQty</th>
+                            <th style="width:100px">@WebApplication2.Resources.Labels.InvoiceStock</th>
                             <th style="width:120px">@WebApplication2.Resources.Labels.InvoiceUnitPrice</th>
                             <th style="width:100px">@WebApplication2.Resources.Labels.InvoiceDiscount</th>
                             <th style="width:120px">@WebApplication2.Resources.Labels.InvoiceLineTotal</th>
@@ -140,76 +141,105 @@
         }
     });
 
-    function updateAllProductDropdowns() {
+   function updateAllProductDropdowns() {
     $('#itemsBody tr').each(function () {
         var select = $(this).find('.product-select');
         var currentVal = select.val();
-
-        // If row already has a product selected, don't touch it
         if (currentVal) return;
-
-        // Only update empty rows
         select.empty().append('<option value="">@WebApplication2.Resources.Labels.SelectProduct</option>');
         $.each(allProducts, function (i, p) {
-            select.append('<option value="' + p.id + '" data-price="' + p.price + '">' + p.text + '</option>');
+            select.append('<option value="' + p.id + '" data-price="' + p.price + '" data-stock="' + p.stock + '">' + p.text + '</option>');
         });
         select.trigger('change.select2');
     });
 }
 
     function addLine() {
-        var options = '<option value="">@WebApplication2.Resources.Labels.SelectProduct</option>';
-        $.each(allProducts, function (i, p) {
-            options += '<option value="' + p.id + '" data-price="' + p.price + '">' + p.text + '</option>';
-        });
+    var options = '<option value="">@WebApplication2.Resources.Labels.SelectProduct</option>';
+    $.each(allProducts, function (i, p) {
+        options += '<option value="' + p.id + '" data-price="' + p.price + '" data-stock="' + p.stock + '">' + p.text + '</option>';
+    });
 
-        var row = '<tr id="line-' + rowIndex + '">' +
-            '<td>' +
-                '<select name="Items[' + rowIndex + '].ProductId" class="form-control product-select" style="width:100%">' +
-                    options +
-                '</select>' +
-                '<input type="hidden" name="Items[' + rowIndex + '].UnitPrice" class="unit-price-input" value="0" />' +
-            '</td>' +
-            '<td>' +
-                '<input type="number" name="Items[' + rowIndex + '].Quantity" class="form-control qty-input" value="1" min="1" />' +
-            '</td>' +
-            '<td>' +
-                '<input type="text" class="form-control unit-price-display" readonly value="0.00" />' +
-            '</td>' +
-            '<td>' +
-                '<input type="number" name="Items[' + rowIndex + '].DiscountPct" class="form-control discount-input" value="0" min="0" max="100" step="0.01" />' +
-            '</td>' +
-            '<td>' +
-                '<input type="text" class="form-control line-total" readonly value="0.00" />' +
-            '</td>' +
-            '<td>' +
-                '<button type="button" class="btn btn-sm btn-danger" onclick="removeLine(' + rowIndex + ')">'+
-                    '<i class="fas fa-times"></i>' +
-                '</button>' +
-            '</td>' +
-        '</tr>';
+    var row = '<tr id="line-' + rowIndex + '">' +
+        '<td>' +
+            '<select name="Items[' + rowIndex + '].ProductId" class="form-control product-select" style="width:100%">' +
+                options +
+            '</select>' +
+            '<input type="hidden" name="Items[' + rowIndex + '].UnitPrice" class="unit-price-input" value="0" />' +
+        '</td>' +
+        '<td>' +
+            '<input type="number" name="Items[' + rowIndex + '].Quantity" class="form-control qty-input" value="1" min="1" />' +
+        '</td>' +
+        '<td>' +
+            '<input type="text" class="form-control stock-display bg-light" readonly value="-" />' +
+        '</td>' +
+        '<td>' +
+            '<input type="text" class="form-control unit-price-display" readonly value="0.00" />' +
+        '</td>' +
+        '<td>' +
+            '<input type="number" name="Items[' + rowIndex + '].DiscountPct" class="form-control discount-input" value="0" min="0" max="100" step="0.01" />' +
+        '</td>' +
+        '<td>' +
+            '<input type="text" class="form-control line-total" readonly value="0.00" />' +
+        '</td>' +
+        '<td>' +
+            '<button type="button" class="btn btn-sm btn-danger" onclick="removeLine(' + rowIndex + ')">' +
+                '<i class="fas fa-times"></i>' +
+            '</button>' +
+        '</td>' +
+    '</tr>';
 
-        $('#itemsBody').append(row);
+    $('#itemsBody').append(row);
 
-        // Initialize Select2 on the new row
-        $('#line-' + rowIndex + ' .product-select').select2({
-            placeholder: '@WebApplication2.Resources.Labels.SelectProduct'
-        }).on('change', function () {
-            var selected = $(this).find(':selected');
-            var price = parseFloat(selected.data('price')) || 0;
-            var row = $(this).closest('tr');
-            row.find('.unit-price-input').val(price);
-            row.find('.unit-price-display').val(price.toFixed(2));
-            calculateRow(row);
-        });
+    // Initialize Select2 on the new row
+    $('#line-' + rowIndex + ' .product-select').select2({
+        placeholder: '@WebApplication2.Resources.Labels.SelectProduct'
+    }).on('change', function () {
+        var selected = $(this).find(':selected');
+        var price = parseFloat(selected.data('price')) || 0;
+        var stock = selected.data('stock');
+        var row = $(this).closest('tr');
+        row.find('.unit-price-input').val(price);
+        row.find('.unit-price-display').val(price.toFixed(2));
 
-        // Recalculate on qty/discount change
-        $('#line-' + rowIndex + ' .qty-input, #line-' + rowIndex + ' .discount-input').on('input', function () {
-            calculateRow($(this).closest('tr'));
-        });
+        // Show stock
+        if (stock !== undefined && stock !== null) {
+            row.find('.stock-display').val(stock);
+            if (stock === 0) {
+                row.find('.stock-display').addClass('text-danger font-weight-bold');
+            } else {
+                row.find('.stock-display').removeClass('text-danger font-weight-bold');
+            }
+        } else {
+            row.find('.stock-display').val('-');
+        }
 
-        rowIndex++;
-    }
+        calculateRow(row);
+    });
+
+    // Recalculate on qty change + warn if exceeds stock
+    $('#line-' + rowIndex + ' .qty-input').on('input', function () {
+        var row = $(this).closest('tr');
+        var qty = parseInt($(this).val()) || 0;
+        var stock = parseInt(row.find('.stock-display').val()) || 0;
+        var stockVal = row.find('.stock-display').val();
+
+        if (stockVal !== '-' && qty > stock) {
+            $(this).addClass('border-danger');
+            $(this).attr('title', '@WebApplication2.Resources.Labels.InvoiceExceedsStock');
+        } else {
+            $(this).removeClass('border-danger');
+            $(this).removeAttr('title');
+        }
+        calculateRow(row);
+    });
+
+    $('#line-' + rowIndex + ' .discount-input').on('input', function () {
+        calculateRow($(this).closest('tr'));
+    });
+
+    rowIndex++;
+}
 
     function removeLine(index) {
         if ($('#itemsBody tr').length === 1) {

@@ -466,6 +466,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Quantity exceeds available stock.
+        /// </summary>
+        public static string InvoiceExceedsStock {
+            get {
+                return ResourceManager.GetString("InvoiceExceedsStock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Discount must be between 0 and 100.
         /// </summary>
         public static string InvoiceInvalidDiscount {
@@ -520,6 +529,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Out of Stock.
+        /// </summary>
+        public static string InvoiceOutOfStock {
+            get {
+                return ResourceManager.GetString("InvoiceOutOfStock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Products.
         /// </summary>
         public static string InvoiceProducts {
@@ -561,6 +579,15 @@ namespace WebApplication2.Resources {
         public static string InvoiceStatus {
             get {
                 return ResourceManager.GetString("InvoiceStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stock.
+        /// </summary>
+        public static string InvoiceStock {
+            get {
+                return ResourceManager.GetString("InvoiceStock", resourceCulture);
             }
         }
         

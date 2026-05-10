@@ -252,6 +252,9 @@
   <data name="InvoiceDiscountAmt" xml:space="preserve">
     <value>Invoice Discount</value>
   </data>
+  <data name="InvoiceExceedsStock" xml:space="preserve">
+    <value>Quantity exceeds available stock</value>
+  </data>
   <data name="InvoiceInvalidDiscount" xml:space="preserve">
     <value>Discount must be between 0 and 100</value>
   </data>
@@ -270,6 +273,9 @@
   <data name="InvoiceNumber" xml:space="preserve">
     <value>Invoice Number</value>
   </data>
+  <data name="InvoiceOutOfStock" xml:space="preserve">
+    <value>Out of Stock</value>
+  </data>
   <data name="InvoiceProducts" xml:space="preserve">
     <value>Products</value>
   </data>
@@ -284,6 +290,9 @@
   </data>
   <data name="InvoiceStatus" xml:space="preserve">
     <value>Status</value>
+  </data>
+  <data name="InvoiceStock" xml:space="preserve">
+    <value>Stock</value>
   </data>
   <data name="InvoiceSubTotal" xml:space="preserve">
     <value>Sub Total</value>
