@@ -16,9 +16,11 @@ namespace WebApplication2.Controllers
         private AppDbContext db = new AppDbContext();
 
         // GET: Invoices
-        public ActionResult Index()
+        public ActionResult Index(int page = 1)
         {
-            var invoices = db.Invoices
+            int pageSize = 20;
+
+            var query = db.Invoices
                 .Select(i => new InvoiceListViewModel
                 {
                     Id = i.Id,
@@ -28,8 +30,19 @@ namespace WebApplication2.Controllers
                     TotalAmount = i.TotalAmount,
                     Status = i.Status
                 })
-                .OrderByDescending(i => i.InvoiceDate)
+                .OrderByDescending(i => i.InvoiceDate);
+
+            int totalRecords = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            var invoices = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.RouteValues = new { };
 
             return View(invoices);
         }

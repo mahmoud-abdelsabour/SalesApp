@@ -29,14 +29,16 @@ namespace WebApplication2.Controllers
         }
 
         // GET: Products
-        public ActionResult Index(int? categoryId)
+        public ActionResult Index(int? categoryId, int page = 1)
         {
+            int pageSize = 15;
+
             var query = db.Products.Where(p => p.IsActive);
 
             if (categoryId.HasValue)
                 query = query.Where(p => p.CategoryId == categoryId.Value);
 
-            var products = query
+            var projected = query
                 .Select(p => new ProductViewModel
                 {
                     Id = p.Id,
@@ -50,11 +52,21 @@ namespace WebApplication2.Controllers
                     IsActive = p.IsActive,
                     CreatedAt = p.CreatedAt
                 })
-                .OrderBy(p => p.NameEn)
+                .OrderBy(p => p.NameEn);
+
+            int totalRecords = projected.Count();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            var products = projected
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
 
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
             ViewBag.CategoryId = categoryId;
             ViewBag.Categories = GetCategoryList(categoryId);
+            ViewBag.RouteValues = new { categoryId };
 
             return View(products);
         }

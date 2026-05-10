@@ -14,8 +14,10 @@ namespace WebApplication2.Controllers
         private AppDbContext db = new AppDbContext();
 
         // GET: Customers
-        public ActionResult Index(string search)
+        public ActionResult Index(string search, int page = 1)
         {
+            int pageSize = 15;
+
             var query = db.Customers.Where(c => c.IsActive);
 
             if (!string.IsNullOrEmpty(search))
@@ -23,7 +25,7 @@ namespace WebApplication2.Controllers
                     c.FullName.Contains(search) ||
                     c.Phone.Contains(search));
 
-            var customers = query
+            var projected = query
                 .Select(c => new CustomerViewModel
                 {
                     Id = c.Id,
@@ -35,10 +37,21 @@ namespace WebApplication2.Controllers
                     CreatedAt = c.CreatedAt,
                     InvoiceCount = c.Invoices.Count()
                 })
-                .OrderBy(c => c.FullName)
+                .OrderBy(c => c.FullName);
+
+            int totalRecords = projected.Count();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            var customers = projected
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
 
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
             ViewBag.Search = search;
+            ViewBag.RouteValues = new { search };
+
             return View(customers);
         }
 

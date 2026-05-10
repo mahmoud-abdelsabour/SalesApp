@@ -14,9 +14,11 @@ namespace WebApplication2.Controllers
         private AppDbContext db = new AppDbContext();
 
         // GET: Categories
-        public ActionResult Index()
+        public ActionResult Index(int page = 1)
         {
-            var categories = db.Categories
+            int pageSize = 10;
+
+            var query = db.Categories
                 .Where(c => c.IsActive)
                 .Select(c => new CategoryViewModel
                 {
@@ -28,8 +30,19 @@ namespace WebApplication2.Controllers
                     CreatedAt = c.CreatedAt,
                     ProductCount = c.Products.Count(p => p.IsActive)
                 })
-                .OrderBy(c => c.NameEn)
+                .OrderBy(c => c.NameEn);
+
+            int totalRecords = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            var categories = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.RouteValues = new { };
 
             return View(categories);
         }
