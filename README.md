@@ -10,7 +10,7 @@
 |----------|------|
 | **Live URL** | http://mahmoudahmed2003-001-site1.ltempurl.com |
 | **Default Login** | Username: `admin` / Password: `Admin@123` |
-| **GitHub Repo** | *(your GitHub URL here)* |
+| **GitHub Repo** | *https://github.com/mahmoud-abdelsabour/SalesApp* |
 
 ---
 
@@ -35,8 +35,6 @@
 
 VTS Sales is a web-based point-of-sale and sales management system designed for retail stores. It supports the full sales cycle from product catalog management through customer management and invoice creation, with multi-language support (Arabic and English) and full mobile responsiveness.
 
-The system was built from scratch as a complete implementation task, completed in 10 days using ASP.NET MVC (.NET Framework 4.8.1) — a technology stack adopted fresh for this project.
-
 ---
 
 ## Technology Stack
@@ -60,28 +58,25 @@ The system was built from scratch as a complete implementation task, completed i
 
 ## Features
 
-### Core Requirements
-- ✅ **Login** with 3-hour session, auto-redirect if already logged in within session window
-- ✅ **Concurrent login prevention** — same account cannot be logged in from two devices simultaneously
-- ✅ **Categories CRUD** with cascading delete to products
-- ✅ **Products CRUD** with soft delete for products with invoice history
-- ✅ **Customers CRUD** with phone uniqueness validation
-- ✅ **Sales Invoice** — multi-product, per-line discount, invoice-level discount
-- ✅ **Idle timeout** — 2-minute inactivity warning via SweetAlert2 dialog
-- ✅ **2-way password encryption** using TripleDES
-- ✅ **Client-side + server-side validation** on all forms
-- ✅ **Responsive mobile layout** with different icon order on mobile vs desktop
-- ✅ **Arabic + English** language support with RTL layout for Arabic
-- ✅ **Code First** database using Entity Framework migrations
-
-### Enhancements
-- ✅ **Stock management** — stock deducted on invoice save, validation prevents overselling
-- ✅ **User management** — create/edit users, reset own password, activate/deactivate
-- ✅ **Dashboard charts** — sales over 30 days (line), top 5 products (bar), revenue by category (doughnut)
-- ✅ **Pagination** on all list pages (Categories: 10/page, Products/Customers: 15/page, Invoices: 20/page)
-- ✅ **Invoice search & filter** — by date range, customer, and status
-- ✅ **Collapsible sidebar navigation** — collapses to icon-only, mobile overlay, state persisted in localStorage, RTL-aware
-- ✅ **UI refresh** — modern color palette, gradient card headers, polished login page
+### Core Requirements and Features
+- **Login** with 3-hour session, auto-redirect if already logged in within session window
+- **Concurrent login prevention** — same account cannot be logged in from two devices simultaneously
+- **Categories CRUD** with cascading delete to products
+- **Products CRUD** with soft delete for products with invoice history
+- **Customers CRUD** with phone uniqueness validation
+- **Sales Invoice** — multi-product, per-line discount, invoice-level discount
+- **Idle timeout** — 2-minute inactivity warning via SweetAlert2 dialog
+- **2-way password encryption** using TripleDES
+- **Client-side + server-side validation** on all forms
+- **Responsive mobile layout** with different icon order on mobile vs desktop
+- **Arabic + English** language support with RTL layout for Arabic
+- **Code First** database using Entity Framework migrations
+- **Stock management** — stock deducted on invoice save, validation prevents overselling
+- **User management** — create/edit users, reset own password, activate/deactivate
+- **Dashboard charts** — sales over 30 days (line), top 5 products (bar), revenue by category (doughnut)
+- **Pagination** on all list pages (Categories: 10/page, Products/Customers: 15/page, Invoices: 20/page)
+- **Invoice search & filter** — by date range, customer, and status
+- **Collapsible sidebar navigation** — collapses to icon-only, mobile overlay, state persisted in localStorage, RTL-aware
 
 ---
 
