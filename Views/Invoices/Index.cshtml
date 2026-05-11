@@ -87,15 +87,15 @@
                                 <td>
                                     @if (item.Status == "Confirmed")
                                     {
-                                        <span class="badge badge-success">@item.Status</span>
+                                        <span class="badge badge-success">@WebApplication2.Resources.Labels.StatusConfirmed</span>
                                     }
                                     else if (item.Status == "Cancelled")
                                     {
-                                        <span class="badge badge-danger">@item.Status</span>
+                                        <span class="badge badge-danger">@WebApplication2.Resources.Labels.StatusCancelled</span>
                                     }
                                     else
                                     {
-                                        <span class="badge badge-warning">@item.Status</span>
+                                        <span class="badge badge-warning">@WebApplication2.Resources.Labels.StatusDraft</span>
                                     }
                                 </td>
                                 <td>

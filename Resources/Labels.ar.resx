@@ -120,6 +120,9 @@
   <data name="Actions" xml:space="preserve">
     <value>الإجراءات</value>
   </data>
+  <data name="ActivateUser" xml:space="preserve">
+    <value>تفعيل</value>
+  </data>
   <data name="Active" xml:space="preserve">
     <value>نشط</value>
   </data>
@@ -195,6 +198,9 @@
   <data name="Dashboard" xml:space="preserve">
     <value>الرئيسية</value>
   </data>
+  <data name="DeactivateUser" xml:space="preserve">
+    <value>تعطيل</value>
+  </data>
   <data name="DeleteCategory" xml:space="preserve">
     <value>حذف فئة</value>
   </data>
@@ -221,6 +227,9 @@
   </data>
   <data name="FilterAll" xml:space="preserve">
     <value>الكل</value>
+  </data>
+  <data name="FilterByCategory" xml:space="preserve">
+    <value>تصفية حسب الفئة</value>
   </data>
   <data name="FilterCancelled" xml:space="preserve">
     <value>ملغي</value>
@@ -294,6 +303,9 @@
   <data name="Invoices" xml:space="preserve">
     <value>الفواتير</value>
   </data>
+  <data name="Invoices2" xml:space="preserve">
+    <value>الفواتير</value>
+  </data>
   <data name="InvoiceSaved" xml:space="preserve">
     <value>تم حفظ الفاتورة بنجاح</value>
   </data>
@@ -339,6 +351,9 @@
   <data name="Price" xml:space="preserve">
     <value>السعر</value>
   </data>
+  <data name="Print" xml:space="preserve">
+    <value>طباعة</value>
+  </data>
   <data name="ProductCategory" xml:space="preserve">
     <value>الفئة</value>
   </data>
@@ -360,11 +375,20 @@
   <data name="ProductStock" xml:space="preserve">
     <value>الكمية في المخزن</value>
   </data>
+  <data name="QuickAccess" xml:space="preserve">
+    <value>وصول سريع</value>
+  </data>
   <data name="RemoveLine" xml:space="preserve">
     <value>حذف</value>
   </data>
   <data name="ResetPassword" xml:space="preserve">
     <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="RevenueByCategory" xml:space="preserve">
+    <value>الإيرادات حسب الفئة</value>
+  </data>
+  <data name="SalesLast30Days" xml:space="preserve">
+    <value>المبيعات — آخر 30 يوم</value>
   </data>
   <data name="Save" xml:space="preserve">
     <value>حفظ</value>
@@ -387,8 +411,23 @@
   <data name="SessionExpired" xml:space="preserve">
     <value>انتهت جلستك. يرجى تسجيل الدخول مجدداً</value>
   </data>
+  <data name="StatusCancelled" xml:space="preserve">
+    <value>ملغي</value>
+  </data>
+  <data name="StatusConfirmed" xml:space="preserve">
+    <value>مؤكد</value>
+  </data>
+  <data name="StatusDraft" xml:space="preserve">
+    <value>مسودة</value>
+  </data>
   <data name="Stock" xml:space="preserve">
     <value>المخزن</value>
+  </data>
+  <data name="TopProducts" xml:space="preserve">
+    <value>أفضل 5 منتجات</value>
+  </data>
+  <data name="TotalRevenue" xml:space="preserve">
+    <value>إجمالي الإيرادات المؤكدة</value>
   </data>
   <data name="UserDeactivated" xml:space="preserve">
     <value>تم تعطيل المستخدم بنجاح</value>

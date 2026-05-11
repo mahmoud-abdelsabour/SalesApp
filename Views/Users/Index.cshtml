@@ -74,7 +74,7 @@
 @section Scripts {
     <script>
         function toggleActive(id, username, isActive) {
-            var action = isActive ? 'Deactivate' : 'Activate';
+            var action = isActive ? '@WebApplication2.Resources.Labels.DeactivateUser' : '@WebApplication2.Resources.Labels.ActivateUser';
             Swal.fire({
                 title: action + ' ' + username + '?',
                 icon: 'warning',

@@ -135,6 +135,13 @@ namespace WebApplication2.Controllers
             if (user == null)
                 return HttpNotFound();
 
+            // Only allow resetting own password
+            if (user.Username != User.Identity.Name)
+            {
+                TempData["Error"] = "You can only reset your own password.";
+                return RedirectToAction("Index");
+            }
+
             return View(new ResetPasswordViewModel
             {
                 Id = user.Id,
@@ -153,6 +160,13 @@ namespace WebApplication2.Controllers
             var user = db.Users.Find(id);
             if (user == null)
                 return HttpNotFound();
+
+            // Only allow resetting own password
+            if (user.Username != User.Identity.Name)
+            {
+                TempData["Error"] = "You can only reset your own password.";
+                return RedirectToAction("Index");
+            }
 
             user.PasswordEncrypted = EncryptionHelper.Encrypt(model.NewPassword);
             db.SaveChanges();

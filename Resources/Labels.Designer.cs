@@ -70,6 +70,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Activate.
+        /// </summary>
+        public static string ActivateUser {
+            get {
+                return ResourceManager.GetString("ActivateUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Active.
         /// </summary>
         public static string Active {
@@ -295,6 +304,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Deactivate.
+        /// </summary>
+        public static string DeactivateUser {
+            get {
+                return ResourceManager.GetString("DeactivateUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Delete Category.
         /// </summary>
         public static string DeleteCategory {
@@ -372,6 +390,15 @@ namespace WebApplication2.Resources {
         public static string FilterAll {
             get {
                 return ResourceManager.GetString("FilterAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filter by Category.
+        /// </summary>
+        public static string FilterByCategory {
+            get {
+                return ResourceManager.GetString("FilterByCategory", resourceCulture);
             }
         }
         
@@ -592,6 +619,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invoices.
+        /// </summary>
+        public static string Invoices2 {
+            get {
+                return ResourceManager.GetString("Invoices2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invoice saved successfully.
         /// </summary>
         public static string InvoiceSaved {
@@ -727,6 +763,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Print.
+        /// </summary>
+        public static string Print {
+            get {
+                return ResourceManager.GetString("Print", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Category.
         /// </summary>
         public static string ProductCategory {
@@ -790,6 +835,15 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Quick Access.
+        /// </summary>
+        public static string QuickAccess {
+            get {
+                return ResourceManager.GetString("QuickAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Remove.
         /// </summary>
         public static string RemoveLine {
@@ -804,6 +858,24 @@ namespace WebApplication2.Resources {
         public static string ResetPassword {
             get {
                 return ResourceManager.GetString("ResetPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Revenue by Category.
+        /// </summary>
+        public static string RevenueByCategory {
+            get {
+                return ResourceManager.GetString("RevenueByCategory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sales — Last 30 Days.
+        /// </summary>
+        public static string SalesLast30Days {
+            get {
+                return ResourceManager.GetString("SalesLast30Days", resourceCulture);
             }
         }
         
@@ -871,11 +943,56 @@ namespace WebApplication2.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cancelled.
+        /// </summary>
+        public static string StatusCancelled {
+            get {
+                return ResourceManager.GetString("StatusCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirmed.
+        /// </summary>
+        public static string StatusConfirmed {
+            get {
+                return ResourceManager.GetString("StatusConfirmed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Draft.
+        /// </summary>
+        public static string StatusDraft {
+            get {
+                return ResourceManager.GetString("StatusDraft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Stock.
         /// </summary>
         public static string Stock {
             get {
                 return ResourceManager.GetString("Stock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Top 5 Products.
+        /// </summary>
+        public static string TopProducts {
+            get {
+                return ResourceManager.GetString("TopProducts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total Confirmed Revenue.
+        /// </summary>
+        public static string TotalRevenue {
+            get {
+                return ResourceManager.GetString("TotalRevenue", resourceCulture);
             }
         }
         

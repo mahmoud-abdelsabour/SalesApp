@@ -48,8 +48,8 @@
         <div class="card">
             <div class="card-body text-center">
                 <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
-                <h3 class="font-weight-bold">@((decimal)ViewBag.TotalRevenue).ToString("N2")</h3>
-                <p class="text-muted mb-0">Total Confirmed Revenue</p>
+                <h3 class="font-weight-bold">@string.Format("{0:N2}", (decimal)ViewBag.TotalRevenue)</h3>
+                <p class="text-muted mb-0">@WebApplication2.Resources.Labels.TotalRevenue</p>
             </div>
         </div>
     </div>
@@ -60,7 +60,7 @@
     <div class="col-md-8 mb-3">
         <div class="card h-100">
             <div class="card-header">
-                <i class="fas fa-chart-line mr-2"></i>Sales — Last 30 Days
+                <i class="fas fa-chart-line mr-2"></i>@WebApplication2.Resources.Labels.SalesLast30Days
             </div>
             <div class="card-body">
                 <canvas id="salesChart" height="120"></canvas>
@@ -70,7 +70,7 @@
     <div class="col-md-4 mb-3">
         <div class="card h-100">
             <div class="card-header">
-                <i class="fas fa-chart-pie mr-2"></i>Revenue by Category
+                <i class="fas fa-chart-pie mr-2"></i>@WebApplication2.Resources.Labels.RevenueByCategory
             </div>
             <div class="card-body">
                 <canvas id="categoryChart"></canvas>
@@ -83,7 +83,7 @@
     <div class="col-md-6 mb-3">
         <div class="card h-100">
             <div class="card-header">
-                <i class="fas fa-chart-bar mr-2"></i>Top 5 Products
+                <i class="fas fa-chart-bar mr-2"></i>@WebApplication2.Resources.Labels.TopProducts
             </div>
             <div class="card-body">
                 <canvas id="productsChart" height="160"></canvas>
@@ -95,7 +95,7 @@
     <div class="col-md-6 mb-3">
         <div class="card h-100">
             <div class="card-header">
-                <i class="fas fa-th mr-2"></i>Quick Access
+                <i class="fas fa-th mr-2"></i>@WebApplication2.Resources.Labels.QuickAccess
             </div>
             <div class="card-body">
                 <div class="row">
