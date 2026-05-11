@@ -48,92 +48,121 @@
         <div class="card">
             <div class="card-body text-center">
                 <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
-                <h3 class="font-weight-bold">@((decimal)ViewBag.TotalRevenue).ToString("N2")</h3>
-                <p class="text-muted mb-0">Total Confirmed Revenue</p>
+                <h3 class="font-weight-bold">@string.Format("{0:N2}", (decimal)ViewBag.TotalRevenue)</h3>
+                <p class="text-muted mb-0">@WebApplication2.Resources.Labels.TotalRevenue</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Navigation Icons Grid -->
-<!--
-    Desktop order: Home(1), CreateInvoice(2), Invoices(3), Customers(4), Products(5), Categories(6)
-    Mobile order:  CreateInvoice(1), Invoices(2), Customers(3), Products(4), Home(5), Categories(6)
--->
-<div class="row">
-
-    <!-- Create Invoice: mobile=1st, desktop=2nd -->
-    <div class="col-6 col-md-4 mb-4 order-1 order-md-2">
-        <a href="/Invoices/Create" class="text-decoration-none">
-            <div class="card text-center h-100 icon-card">
-                <div class="card-body">
-                    <i class="fas fa-file-invoice fa-3x text-primary mb-3"></i>
-                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.CreateInvoice</h6>
-                </div>
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chart-line mr-2"></i>@WebApplication2.Resources.Labels.SalesLast30Days
             </div>
-        </a>
+            <div class="card-body">
+                <canvas id="salesChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chart-pie mr-2"></i>@WebApplication2.Resources.Labels.RevenueByCategory
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chart-bar mr-2"></i>@WebApplication2.Resources.Labels.TopProducts
+            </div>
+            <div class="card-body">
+                <canvas id="productsChart" height="160"></canvas>
+            </div>
+        </div>
     </div>
 
-    <!-- Invoices List: mobile=2nd, desktop=3rd -->
-    <div class="col-6 col-md-4 mb-4 order-2 order-md-3">
-        <a href="/Invoices/Index" class="text-decoration-none">
-            <div class="card text-center h-100 icon-card">
-                <div class="card-body">
-                    <i class="fas fa-list fa-3x text-success mb-3"></i>
-                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Invoices</h6>
+    <!-- Navigation Icons -->
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-th mr-2"></i>@WebApplication2.Resources.Labels.QuickAccess
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3 order-1 order-md-2">
+                        <a href="/Invoices/Create" class="text-decoration-none">
+                            <div class="card text-center icon-card">
+                                <div class="card-body py-3">
+                                    <i class="fas fa-file-invoice fa-2x text-primary mb-2"></i>
+                                    <p class="mb-0 small font-weight-bold">@WebApplication2.Resources.Labels.CreateInvoice</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3 order-2 order-md-3">
+                        <a href="/Invoices/Index" class="text-decoration-none">
+                            <div class="card text-center icon-card">
+                                <div class="card-body py-3">
+                                    <i class="fas fa-list fa-2x text-success mb-2"></i>
+                                    <p class="mb-0 small font-weight-bold">@WebApplication2.Resources.Labels.Invoices</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3 order-3 order-md-4">
+                        <a href="/Customers/Index" class="text-decoration-none">
+                            <div class="card text-center icon-card">
+                                <div class="card-body py-3">
+                                    <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                                    <p class="mb-0 small font-weight-bold">@WebApplication2.Resources.Labels.Customers</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3 order-4 order-md-5">
+                        <a href="/Products/Index" class="text-decoration-none">
+                            <div class="card text-center icon-card">
+                                <div class="card-body py-3">
+                                    <i class="fas fa-box fa-2x text-info mb-2"></i>
+                                    <p class="mb-0 small font-weight-bold">@WebApplication2.Resources.Labels.Products</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3 order-5 order-md-1">
+                        <a href="/Home/Index" class="text-decoration-none">
+                            <div class="card text-center icon-card">
+                                <div class="card-body py-3">
+                                    <i class="fas fa-home fa-2x text-secondary mb-2"></i>
+                                    <p class="mb-0 small font-weight-bold">@WebApplication2.Resources.Labels.Dashboard</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3 order-6 order-md-6">
+                        <a href="/Categories/Index" class="text-decoration-none">
+                            <div class="card text-center icon-card">
+                                <div class="card-body py-3">
+                                    <i class="fas fa-tags fa-2x text-danger mb-2"></i>
+                                    <p class="mb-0 small font-weight-bold">@WebApplication2.Resources.Labels.Categories</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </a>
+        </div>
     </div>
-
-    <!-- Customers: mobile=3rd, desktop=4th -->
-    <div class="col-6 col-md-4 mb-4 order-3 order-md-4">
-        <a href="/Customers/Index" class="text-decoration-none">
-            <div class="card text-center h-100 icon-card">
-                <div class="card-body">
-                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
-                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Customers</h6>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Products: mobile=4th, desktop=5th -->
-    <div class="col-6 col-md-4 mb-4 order-4 order-md-5">
-        <a href="/Products/Index" class="text-decoration-none">
-            <div class="card text-center h-100 icon-card">
-                <div class="card-body">
-                    <i class="fas fa-box fa-3x text-info mb-3"></i>
-                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Products</h6>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Home/Dashboard: mobile=5th, desktop=1st -->
-    <div class="col-6 col-md-4 mb-4 order-5 order-md-1">
-        <a href="/Home/Index" class="text-decoration-none">
-            <div class="card text-center h-100 icon-card">
-                <div class="card-body">
-                    <i class="fas fa-home fa-3x text-secondary mb-3"></i>
-                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Dashboard</h6>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Categories: mobile=6th, desktop=6th -->
-    <div class="col-6 col-md-4 mb-4 order-6 order-md-6">
-        <a href="/Categories/Index" class="text-decoration-none">
-            <div class="card text-center h-100 icon-card">
-                <div class="card-body">
-                    <i class="fas fa-tags fa-3x text-danger mb-3"></i>
-                    <h6 class="font-weight-bold">@WebApplication2.Resources.Labels.Categories</h6>
-                </div>
-            </div>
-        </a>
-    </div>
-
 </div>
 
 <style>
@@ -148,3 +177,83 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         }
 </style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+    var chartColors = ['#1B6CA8', '#2D9B6F', '#F4A261', '#E63946', '#00B4D8', '#9B5DE5'];
+
+    // Sales Chart
+    $.get('/Home/GetSalesChart', function (data) {
+        if (data.labels.length === 0) {
+            $('#salesChart').parent().html('<p class="text-center text-muted mt-4">No sales data for the last 30 days</p>');
+            return;
+        }
+        new Chart(document.getElementById('salesChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Sales',
+                    data: data.values,
+                    borderColor: '#1B6CA8',
+                    backgroundColor: 'rgba(27,108,168,0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+
+    // Top Products Chart
+    $.get('/Home/GetTopProducts', function (data) {
+        if (data.labels.length === 0) {
+            $('#productsChart').parent().html('<p class="text-center text-muted mt-4">No product sales data yet</p>');
+            return;
+        }
+        new Chart(document.getElementById('productsChart'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Qty Sold',
+                    data: data.values,
+                    backgroundColor: chartColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+
+    // Revenue by Category Chart
+    $.get('/Home/GetRevenueByCategory', function (data) {
+        if (data.labels.length === 0) {
+            $('#categoryChart').parent().html('<p class="text-center text-muted mt-4">No revenue data yet</p>');
+            return;
+        }
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.values,
+                    backgroundColor: chartColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    });
+    </script>
+}
