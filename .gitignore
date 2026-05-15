@@ -2,5 +2,8 @@ packages/
 *.user
 *.suo
 .vs/
-**/bin/
 **/obj/
+**/bin/*.dll
+**/bin/*.pdb
+**/bin/*.xml
+**/bin/*.exe.config
