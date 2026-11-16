@@ -209,7 +209,23 @@ namespace WebApplication2.Controllers
                     invoice.TotalAmount = totalAmount;
 
                     db.Invoices.Add(invoice);
-                    db.SaveChanges();
+
+                    // Unique index on InvoiceNumber guards against simultaneous saves;
+                    // on a collision, generate a fresh number and retry.
+                    const int maxAttempts = 5;
+                    for (int attempt = 1; ; attempt++)
+                    {
+                        try
+                        {
+                            db.SaveChanges();
+                            break;
+                        }
+                        catch (System.Data.Entity.Infrastructure.DbUpdateException ex)
+                            when (attempt < maxAttempts && IsDuplicateKey(ex))
+                        {
+                            invoice.InvoiceNumber = InvoiceNumberHelper.Generate(db);
+                        }
+                    }
 
                     // Attach invoice id to items
                     foreach (var item in invoiceItems)
@@ -354,6 +370,17 @@ namespace WebApplication2.Controllers
                     return Json(new { success = false, message = "Error cancelling invoice." });
                 }
             }
+        }
+
+        private static bool IsDuplicateKey(Exception ex)
+        {
+            for (var e = ex; e != null; e = e.InnerException)
+            {
+                var sql = e as System.Data.SqlClient.SqlException;
+                if (sql != null && (sql.Number == 2601 || sql.Number == 2627))
+                    return true;
+            }
+            return false;
         }
 
         protected override void Dispose(bool disposing)

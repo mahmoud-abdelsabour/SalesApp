@@ -158,6 +158,10 @@
     <Compile Include="Migrations\202605052019170_FullSchema.Designer.cs">
       <DependentUpon>202605052019170_FullSchema.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202611162114345_AddRowVersionAndUniqueInvoiceNumber.cs" />
+    <Compile Include="Migrations\202611162114345_AddRowVersionAndUniqueInvoiceNumber.Designer.cs">
+      <DependentUpon>202611162114345_AddRowVersionAndUniqueInvoiceNumber.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ConcurrentSession.cs" />
     <Compile Include="Models\Data\AppDbContext.cs" />
@@ -294,6 +298,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202605052019170_FullSchema.resx">
       <DependentUpon>202605052019170_FullSchema.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202611162114345_AddRowVersionAndUniqueInvoiceNumber.resx">
+      <DependentUpon>202611162114345_AddRowVersionAndUniqueInvoiceNumber.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Labels.ar.resx" />
     <EmbeddedResource Include="Resources\Labels.resx">

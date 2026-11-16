@@ -13,6 +13,7 @@ namespace WebApplication2.Models.Entities
 
         [Required]
         [MaxLength(50)]
+        [Index("IX_Invoices_InvoiceNumber", IsUnique = true)]
         public string InvoiceNumber { get; set; }
 
         public int CustomerId { get; set; }
