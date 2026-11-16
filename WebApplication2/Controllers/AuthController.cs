@@ -55,11 +55,21 @@ namespace WebApplication2.Controllers
             db.SaveChanges();
 
             // Check concurrent session
-            var existingSession = db.ConcurrentSessions.FirstOrDefault(s => s.UserId == user.Id);
-            if (existingSession != null)
+            var existingSessions = db.ConcurrentSessions.Where(s => s.UserId == user.Id).ToList();
+            if (existingSessions.Any())
             {
-                ModelState.AddModelError("", Resources.Labels.AlreadyLoggedIn);
-                return View(model);
+                if (!model.TakeOver)
+                {
+                    // Ask the user to confirm ending the other session
+                    ModelState.AddModelError("", Resources.Labels.AlreadyLoggedIn);
+                    ViewBag.SessionConflict = true;
+                    ModelState.Remove("TakeOver");
+                    return View(model);
+                }
+
+                // Take over: end the old session(s); the old browser is logged out on its next request
+                db.ConcurrentSessions.RemoveRange(existingSessions);
+                db.SaveChanges();
             }
 
             // Create session token

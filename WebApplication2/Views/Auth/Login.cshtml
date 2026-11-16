@@ -221,9 +221,26 @@
                         @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
                     </div>
 
-                    <button type="submit" class="btn-login">
-                        <i class="fas fa-sign-in-alt mr-2"></i>@WebApplication2.Resources.Labels.Login
-                    </button>
+                    if (ViewBag.SessionConflict == true)
+                    {
+                        var confirmMsg = isArabic
+                            ? "سيتم تسجيل خروج الجلسة الأخرى. هل تريد المتابعة؟"
+                            : "This will sign out your other session. Continue?";
+                        var takeOverText = isArabic ? "الاستيلاء على الجلسة" : "Take over session";
+                        var retypeText = isArabic ? "أعد إدخال كلمة المرور للمتابعة." : "Re-enter your password to continue.";
+
+                        <input type="hidden" name="TakeOver" value="true" />
+                        <p class="text-danger">@retypeText</p>
+                        <button type="submit" class="btn-login" onclick="return confirm('@Html.Raw(HttpUtility.JavaScriptStringEncode(confirmMsg))');">
+                            <i class="fas fa-exchange-alt mr-2"></i>@takeOverText
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn-login">
+                            <i class="fas fa-sign-in-alt mr-2"></i>@WebApplication2.Resources.Labels.Login
+                        </button>
+                    }
                 }
             </div>
         </div>

@@ -12,5 +12,8 @@ namespace WebApplication2.Models.ViewModels
         [MaxLength(200)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
+
+        // True when the user confirmed ending their other active session
+        public bool TakeOver { get; set; }
     }
 }
