@@ -51,6 +51,7 @@ namespace WebApplication2.Controllers
         public JsonResult GetTopProducts()
         {
             var data = db.InvoiceItems
+                .Where(i => i.Invoice.Status == "Confirmed")
                 .GroupBy(i => i.ProductName)
                 .Select(g => new
                 {
@@ -71,6 +72,7 @@ namespace WebApplication2.Controllers
         public JsonResult GetRevenueByCategory()
         {
             var data = db.InvoiceItems
+                .Where(i => i.Invoice.Status == "Confirmed")
                 .GroupBy(i => i.Product.Category.NameEn)
                 .Select(g => new
                 {
