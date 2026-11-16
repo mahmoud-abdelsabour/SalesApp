@@ -32,6 +32,9 @@ namespace WebApplication2.Models.Entities
 
         public bool IsActive { get; set; } = true;
 
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [ForeignKey("CategoryId")]

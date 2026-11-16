@@ -235,6 +235,13 @@ namespace WebApplication2.Controllers
                     TempData["Success"] = Resources.Labels.InvoiceSaved;
                     return RedirectToAction("Details", new { id = invoice.Id });
                 }
+                catch (System.Data.Entity.Infrastructure.DbUpdateConcurrencyException)
+                {
+                    // Another invoice changed the same product's stock at the same time
+                    transaction.Rollback();
+                    ModelState.AddModelError("", "Stock was changed by another transaction. Please review quantities and try again.");
+                    return View(model);
+                }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
@@ -335,6 +342,11 @@ namespace WebApplication2.Controllers
                     transaction.Commit();
 
                     return Json(new { success = true, message = "Invoice cancelled successfully." });
+                }
+                catch (System.Data.Entity.Infrastructure.DbUpdateConcurrencyException)
+                {
+                    transaction.Rollback();
+                    return Json(new { success = false, message = "Stock was changed by another transaction. Please try again." });
                 }
                 catch (Exception)
                 {
