@@ -317,10 +317,31 @@ namespace WebApplication2.Controllers
             if (invoice.Status == "Cancelled")
                 return Json(new { success = false, message = "Invoice is already cancelled." });
 
-            invoice.Status = "Cancelled";
-            db.SaveChanges();
+            using (var transaction = db.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Return each item's quantity to stock
+                    var items = db.InvoiceItems.Where(i => i.InvoiceId == id).ToList();
+                    foreach (var item in items)
+                    {
+                        var product = db.Products.Find(item.ProductId);
+                        if (product != null)
+                            product.StockQuantity += item.Quantity;
+                    }
 
-            return Json(new { success = true, message = "Invoice cancelled successfully." });
+                    invoice.Status = "Cancelled";
+                    db.SaveChanges();
+                    transaction.Commit();
+
+                    return Json(new { success = true, message = "Invoice cancelled successfully." });
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    return Json(new { success = false, message = "Error cancelling invoice." });
+                }
+            }
         }
 
         protected override void Dispose(bool disposing)
