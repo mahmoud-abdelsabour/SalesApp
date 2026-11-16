@@ -7,7 +7,15 @@ namespace WebApplication2.Helpers
 {
     public static class EncryptionHelper
     {
-        private static readonly string _key = "VTSSales@SecureKey#2024!";
+        private static readonly string _key = LoadKey();
+
+        private static string LoadKey()
+        {
+            var key = ConfigurationManager.AppSettings["EncryptionKey"];
+            if (string.IsNullOrWhiteSpace(key))
+                throw new ConfigurationErrorsException("Missing 'EncryptionKey' in Web.config <appSettings>.");
+            return key;
+        }
 
         public static string Encrypt(string plainText)
         {
