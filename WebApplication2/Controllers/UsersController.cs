@@ -63,7 +63,7 @@ namespace WebApplication2.Controllers
                 Username = model.Username,
                 FullName = model.FullName,
                 Email = model.Email,
-                PasswordEncrypted = EncryptionHelper.Encrypt(model.Password),
+                PasswordEncrypted = PasswordHelper.Hash(model.Password),
                 IsActive = true,
                 CreatedAt = DateTime.Now
             };
@@ -168,7 +168,7 @@ namespace WebApplication2.Controllers
                 return RedirectToAction("Index");
             }
 
-            user.PasswordEncrypted = EncryptionHelper.Encrypt(model.NewPassword);
+            user.PasswordEncrypted = PasswordHelper.Hash(model.NewPassword);
             db.SaveChanges();
 
             TempData["Success"] = Resources.Labels.SaveSuccess;

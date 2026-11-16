@@ -31,16 +31,21 @@ namespace WebApplication2.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var encryptedPassword = EncryptionHelper.Encrypt(model.Password);
             var user = db.Users.FirstOrDefault(u =>
                 u.Username == model.Username &&
-                u.PasswordEncrypted == encryptedPassword &&
                 u.IsActive);
 
-            if (user == null)
+            if (user == null || !PasswordHelper.Verify(model.Password, user.PasswordEncrypted))
             {
                 ModelState.AddModelError("", Resources.Labels.InvalidCredentials);
                 return View(model);
+            }
+
+            // Transparently upgrade legacy 3DES passwords to PBKDF2
+            if (PasswordHelper.NeedsUpgrade(user.PasswordEncrypted))
+            {
+                user.PasswordEncrypted = PasswordHelper.Hash(model.Password);
+                db.SaveChanges();
             }
 
             // Clean up expired sessions (older than 3 hours)

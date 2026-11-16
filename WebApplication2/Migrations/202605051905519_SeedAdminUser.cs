@@ -7,7 +7,7 @@
     {
         public override void Up()
         {
-            string encrypted = WebApplication2.Helpers.EncryptionHelper.Encrypt("Admin@123");
+            string encrypted = WebApplication2.Helpers.PasswordHelper.Hash("Admin@123");
             Sql($"INSERT INTO Users (Username, PasswordEncrypted, FullName, Email, IsActive, CreatedAt) VALUES ('admin', '{encrypted}', 'System Administrator', 'admin@vtssales.com', 1, GETDATE())");
         }
 
