@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using WebApplication2.Filters;
+using WebApplication2.Helpers;
 using WebApplication2.Models.Data;
 using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
@@ -53,6 +55,45 @@ namespace WebApplication2.Controllers
             ViewBag.RouteValues = new { search };
 
             return View(customers);
+        }
+
+        // GET: Customers/Export  (Excel, same search as Index)
+        public ActionResult Export(string search)
+        {
+            var query = db.Customers.Where(c => c.IsActive);
+            if (!string.IsNullOrEmpty(search))
+                query = query.Where(c => c.FullName.Contains(search) || c.Phone.Contains(search));
+
+            var rows = query
+                .OrderBy(c => c.FullName)
+                .Select(c => new
+                {
+                    c.FullName,
+                    c.Phone,
+                    c.Email,
+                    c.Address,
+                    InvoiceCount = c.Invoices.Count(),
+                    c.CreatedAt
+                })
+                .ToList();
+
+            var columns = new List<ExcelColumn>
+            {
+                new ExcelColumn(Resources.Labels.CustomerFullName),
+                new ExcelColumn(Resources.Labels.CustomerPhone),
+                new ExcelColumn(Resources.Labels.CustomerEmail),
+                new ExcelColumn(Resources.Labels.CustomerAddress),
+                new ExcelColumn(Resources.Labels.Invoices),
+                new ExcelColumn("Created", ExcelExportHelper.DateFormat)
+            };
+
+            var data = rows.Select(r => new object[]
+            {
+                r.FullName, r.Phone, r.Email, r.Address, r.InvoiceCount, r.CreatedAt
+            });
+
+            var bytes = ExcelExportHelper.Build(Resources.Labels.Customers, columns, data);
+            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Customers"));
         }
 
         // GET: Customers/Create

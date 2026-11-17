@@ -20,31 +20,7 @@ namespace WebApplication2.Controllers
         {
             int pageSize = 20;
 
-            var query = db.Invoices.AsQueryable();
-
-            // Apply filters
-            if (!string.IsNullOrEmpty(dateFrom))
-            {
-                DateTime from;
-                if (DateTime.TryParse(dateFrom, out from))
-                    query = query.Where(i => i.InvoiceDate >= from);
-            }
-
-            if (!string.IsNullOrEmpty(dateTo))
-            {
-                DateTime to;
-                if (DateTime.TryParse(dateTo, out to))
-                {
-                    DateTime toEndOfDay = to.AddDays(1);
-                    query = query.Where(i => i.InvoiceDate <= toEndOfDay);
-                }
-            }
-
-            if (customerId.HasValue)
-                query = query.Where(i => i.CustomerId == customerId.Value);
-
-            if (!string.IsNullOrEmpty(status))
-                query = query.Where(i => i.Status == status);
+            var query = FilterInvoices(dateFrom, dateTo, customerId, status);
 
             var projected = query
                 .Select(i => new InvoiceListViewModel
@@ -77,6 +53,79 @@ namespace WebApplication2.Controllers
             ViewBag.Status = status;
 
             return View(invoices);
+        }
+
+        // Shared by Index and Export so the Excel file matches what the list shows
+        private IQueryable<Invoice> FilterInvoices(string dateFrom, string dateTo, int? customerId, string status)
+        {
+            var query = db.Invoices.AsQueryable();
+
+            if (!string.IsNullOrEmpty(dateFrom))
+            {
+                DateTime from;
+                if (DateTime.TryParse(dateFrom, out from))
+                    query = query.Where(i => i.InvoiceDate >= from);
+            }
+
+            if (!string.IsNullOrEmpty(dateTo))
+            {
+                DateTime to;
+                if (DateTime.TryParse(dateTo, out to))
+                {
+                    DateTime toEndOfDay = to.Date.AddDays(1);
+                    query = query.Where(i => i.InvoiceDate < toEndOfDay);
+                }
+            }
+
+            if (customerId.HasValue)
+                query = query.Where(i => i.CustomerId == customerId.Value);
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(i => i.Status == status);
+
+            return query;
+        }
+
+        // GET: Invoices/Export  (Excel, honours the same filters as Index)
+        public ActionResult Export(string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
+        {
+            var rows = FilterInvoices(dateFrom, dateTo, customerId, status)
+                .OrderByDescending(i => i.InvoiceDate)
+                .Select(i => new
+                {
+                    i.InvoiceNumber,
+                    Customer = i.Customer.FullName,
+                    i.InvoiceDate,
+                    i.SubTotal,
+                    i.InvoiceDiscountPct,
+                    i.InvoiceDiscountAmt,
+                    i.TotalAmount,
+                    i.Status,
+                    CreatedBy = i.CreatedByUser.FullName
+                })
+                .ToList();
+
+            var columns = new List<ExcelColumn>
+            {
+                new ExcelColumn(Resources.Labels.InvoiceNumber),
+                new ExcelColumn(Resources.Labels.InvoiceCustomer),
+                new ExcelColumn(Resources.Labels.InvoiceDate, ExcelExportHelper.DateTimeFormat),
+                new ExcelColumn(Resources.Labels.InvoiceSubTotal, ExcelExportHelper.MoneyFormat),
+                new ExcelColumn(Resources.Labels.InvoiceDiscount + " %", ExcelExportHelper.MoneyFormat),
+                new ExcelColumn(Resources.Labels.InvoiceDiscountAmt, ExcelExportHelper.MoneyFormat),
+                new ExcelColumn(Resources.Labels.InvoiceTotal, ExcelExportHelper.MoneyFormat),
+                new ExcelColumn(Resources.Labels.InvoiceStatus),
+                new ExcelColumn("Created By")
+            };
+
+            var data = rows.Select(r => new object[]
+            {
+                r.InvoiceNumber, r.Customer, r.InvoiceDate, r.SubTotal, r.InvoiceDiscountPct,
+                r.InvoiceDiscountAmt, r.TotalAmount, r.Status, r.CreatedBy
+            });
+
+            var bytes = ExcelExportHelper.Build(Resources.Labels.Invoices, columns, data);
+            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Invoices"));
         }
 
         // GET: Invoices/Create

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using WebApplication2.Filters;
+using WebApplication2.Helpers;
 using WebApplication2.Models.Data;
 using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
@@ -69,6 +70,47 @@ namespace WebApplication2.Controllers
             ViewBag.RouteValues = new { categoryId };
 
             return View(products);
+        }
+
+        // GET: Products/Export  (Excel, same category filter as Index)
+        public ActionResult Export(int? categoryId)
+        {
+            var query = db.Products.Where(p => p.IsActive);
+            if (categoryId.HasValue)
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+
+            var rows = query
+                .OrderBy(p => p.NameEn)
+                .Select(p => new
+                {
+                    p.NameEn,
+                    p.NameAr,
+                    Category = p.Category.NameEn,
+                    p.Price,
+                    p.StockQuantity,
+                    p.Description,
+                    p.CreatedAt
+                })
+                .ToList();
+
+            var columns = new List<ExcelColumn>
+            {
+                new ExcelColumn(Resources.Labels.ProductNameEn),
+                new ExcelColumn(Resources.Labels.ProductNameAr),
+                new ExcelColumn(Resources.Labels.ProductCategory),
+                new ExcelColumn(Resources.Labels.ProductPrice, ExcelExportHelper.MoneyFormat),
+                new ExcelColumn(Resources.Labels.ProductStock),
+                new ExcelColumn(Resources.Labels.ProductDescription),
+                new ExcelColumn("Created", ExcelExportHelper.DateFormat)
+            };
+
+            var data = rows.Select(r => new object[]
+            {
+                r.NameEn, r.NameAr, r.Category, r.Price, r.StockQuantity, r.Description, r.CreatedAt
+            });
+
+            var bytes = ExcelExportHelper.Build(Resources.Labels.Products, columns, data);
+            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Products"));
         }
 
         // GET: Products/Create
