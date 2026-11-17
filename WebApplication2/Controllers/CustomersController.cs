@@ -57,8 +57,8 @@ namespace WebApplication2.Controllers
             return View(customers);
         }
 
-        // GET: Customers/Export  (Excel, same search as Index)
-        public ActionResult Export(string search)
+        // Table of customers (same search as Index) - shared by Excel and PDF
+        private TableReport BuildCustomerTable(string search)
         {
             var query = db.Customers.Where(c => c.IsActive);
             if (!string.IsNullOrEmpty(search))
@@ -77,23 +77,38 @@ namespace WebApplication2.Controllers
                 })
                 .ToList();
 
-            var columns = new List<ExcelColumn>
+            return new TableReport
             {
-                new ExcelColumn(Resources.Labels.CustomerFullName),
-                new ExcelColumn(Resources.Labels.CustomerPhone),
-                new ExcelColumn(Resources.Labels.CustomerEmail),
-                new ExcelColumn(Resources.Labels.CustomerAddress),
-                new ExcelColumn(Resources.Labels.Invoices),
-                new ExcelColumn("Created", ExcelExportHelper.DateFormat)
+                Title = Resources.Labels.Customers,
+                Subtitle = string.IsNullOrEmpty(search) ? null : Resources.Labels.Search + ": " + search,
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(Resources.Labels.CustomerFullName),
+                    new ExcelColumn(Resources.Labels.CustomerPhone),
+                    new ExcelColumn(Resources.Labels.CustomerEmail),
+                    new ExcelColumn(Resources.Labels.CustomerAddress),
+                    new ExcelColumn(Resources.Labels.Invoices),
+                    new ExcelColumn("Created", ExcelExportHelper.DateFormat)
+                },
+                Rows = rows.Select(r => new object[]
+                {
+                    r.FullName, r.Phone, r.Email, r.Address, r.InvoiceCount, r.CreatedAt
+                }).ToList()
             };
+        }
 
-            var data = rows.Select(r => new object[]
-            {
-                r.FullName, r.Phone, r.Email, r.Address, r.InvoiceCount, r.CreatedAt
-            });
-
-            var bytes = ExcelExportHelper.Build(Resources.Labels.Customers, columns, data);
+        // GET: Customers/Export  (Excel)
+        public ActionResult Export(string search)
+        {
+            var t = BuildCustomerTable(search);
+            var bytes = ExcelExportHelper.Build(t.Title, t.Columns, t.Rows);
             return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Customers"));
+        }
+
+        // GET: Customers/ExportPdf  (printable list; use the browser's "Save as PDF")
+        public ActionResult ExportPdf(string search)
+        {
+            return View("~/Views/Shared/ListReport.cshtml", BuildCustomerTable(search));
         }
 
         // GET: Customers/Create

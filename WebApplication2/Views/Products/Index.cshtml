@@ -10,6 +10,9 @@
             <a href="@Url.Action("Export", new { categoryId = (int?)ViewBag.CategoryId })" class="btn btn-sm btn-success mr-1">
                 <i class="fas fa-file-excel mr-1"></i>@(WebApplication2.Helpers.LanguageHelper.IsArabic() ? "تصدير Excel" : "Export Excel")
             </a>
+            <a href="@Url.Action("ExportPdf", new { categoryId = (int?)ViewBag.CategoryId })" target="_blank" class="btn btn-sm btn-danger mr-1">
+                <i class="fas fa-file-pdf mr-1"></i>@(WebApplication2.Helpers.LanguageHelper.IsArabic() ? "تصدير PDF" : "Export PDF")
+            </a>
             <a href="/Products/Create" class="btn btn-sm btn-light">
                 <i class="fas fa-plus mr-1"></i>@WebApplication2.Resources.Labels.AddProduct
             </a>

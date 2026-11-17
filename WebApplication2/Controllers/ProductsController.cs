@@ -72,8 +72,8 @@ namespace WebApplication2.Controllers
             return View(products);
         }
 
-        // GET: Products/Export  (Excel, same category filter as Index)
-        public ActionResult Export(int? categoryId)
+        // Table of products (same category filter as Index) - shared by Excel and PDF
+        private TableReport BuildProductTable(int? categoryId)
         {
             var query = db.Products.Where(p => p.IsActive);
             if (categoryId.HasValue)
@@ -93,24 +93,38 @@ namespace WebApplication2.Controllers
                 })
                 .ToList();
 
-            var columns = new List<ExcelColumn>
+            return new TableReport
             {
-                new ExcelColumn(Resources.Labels.ProductNameEn),
-                new ExcelColumn(Resources.Labels.ProductNameAr),
-                new ExcelColumn(Resources.Labels.ProductCategory),
-                new ExcelColumn(Resources.Labels.ProductPrice, ExcelExportHelper.MoneyFormat),
-                new ExcelColumn(Resources.Labels.ProductStock),
-                new ExcelColumn(Resources.Labels.ProductDescription),
-                new ExcelColumn("Created", ExcelExportHelper.DateFormat)
+                Title = Resources.Labels.Products,
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(Resources.Labels.ProductNameEn),
+                    new ExcelColumn(Resources.Labels.ProductNameAr),
+                    new ExcelColumn(Resources.Labels.ProductCategory),
+                    new ExcelColumn(Resources.Labels.ProductPrice, ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(Resources.Labels.ProductStock),
+                    new ExcelColumn(Resources.Labels.ProductDescription),
+                    new ExcelColumn("Created", ExcelExportHelper.DateFormat)
+                },
+                Rows = rows.Select(r => new object[]
+                {
+                    r.NameEn, r.NameAr, r.Category, r.Price, r.StockQuantity, r.Description, r.CreatedAt
+                }).ToList()
             };
+        }
 
-            var data = rows.Select(r => new object[]
-            {
-                r.NameEn, r.NameAr, r.Category, r.Price, r.StockQuantity, r.Description, r.CreatedAt
-            });
-
-            var bytes = ExcelExportHelper.Build(Resources.Labels.Products, columns, data);
+        // GET: Products/Export  (Excel)
+        public ActionResult Export(int? categoryId)
+        {
+            var t = BuildProductTable(categoryId);
+            var bytes = ExcelExportHelper.Build(t.Title, t.Columns, t.Rows);
             return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Products"));
+        }
+
+        // GET: Products/ExportPdf  (printable list; use the browser's "Save as PDF")
+        public ActionResult ExportPdf(int? categoryId)
+        {
+            return View("~/Views/Shared/ListReport.cshtml", BuildProductTable(categoryId));
         }
 
         // GET: Products/Create

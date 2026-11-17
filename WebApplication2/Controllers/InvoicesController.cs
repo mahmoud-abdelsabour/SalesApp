@@ -86,8 +86,8 @@ namespace WebApplication2.Controllers
             return query;
         }
 
-        // GET: Invoices/Export  (Excel, honours the same filters as Index)
-        public ActionResult Export(string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
+        // Table of invoices (honours the same filters as Index) - shared by Excel and PDF
+        private TableReport BuildInvoiceTable(string dateFrom, string dateTo, int? customerId, string status)
         {
             var rows = FilterInvoices(dateFrom, dateTo, customerId, status)
                 .OrderByDescending(i => i.InvoiceDate)
@@ -105,27 +105,58 @@ namespace WebApplication2.Controllers
                 })
                 .ToList();
 
-            var columns = new List<ExcelColumn>
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(dateFrom)) parts.Add(Resources.Labels.FilterDateFrom + ": " + dateFrom);
+            if (!string.IsNullOrEmpty(dateTo)) parts.Add(Resources.Labels.FilterDateTo + ": " + dateTo);
+            if (!string.IsNullOrEmpty(status)) parts.Add(Resources.Labels.InvoiceStatus + ": " + status);
+
+            return new TableReport
             {
-                new ExcelColumn(Resources.Labels.InvoiceNumber),
-                new ExcelColumn(Resources.Labels.InvoiceCustomer),
-                new ExcelColumn(Resources.Labels.InvoiceDate, ExcelExportHelper.DateTimeFormat),
-                new ExcelColumn(Resources.Labels.InvoiceSubTotal, ExcelExportHelper.MoneyFormat),
-                new ExcelColumn(Resources.Labels.InvoiceDiscount + " %", ExcelExportHelper.MoneyFormat),
-                new ExcelColumn(Resources.Labels.InvoiceDiscountAmt, ExcelExportHelper.MoneyFormat),
-                new ExcelColumn(Resources.Labels.InvoiceTotal, ExcelExportHelper.MoneyFormat),
-                new ExcelColumn(Resources.Labels.InvoiceStatus),
-                new ExcelColumn("Created By")
+                Title = Resources.Labels.Invoices,
+                Subtitle = string.Join(" | ", parts),
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(Resources.Labels.InvoiceNumber),
+                    new ExcelColumn(Resources.Labels.InvoiceCustomer),
+                    new ExcelColumn(Resources.Labels.InvoiceDate, ExcelExportHelper.DateTimeFormat),
+                    new ExcelColumn(Resources.Labels.InvoiceSubTotal, ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(Resources.Labels.InvoiceDiscount + " %", ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(Resources.Labels.InvoiceDiscountAmt, ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(Resources.Labels.InvoiceTotal, ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(Resources.Labels.InvoiceStatus),
+                    new ExcelColumn("Created By")
+                },
+                Rows = rows.Select(r => new object[]
+                {
+                    r.InvoiceNumber, r.Customer, r.InvoiceDate, r.SubTotal, r.InvoiceDiscountPct,
+                    r.InvoiceDiscountAmt, r.TotalAmount, r.Status, r.CreatedBy
+                }).ToList()
             };
+        }
 
-            var data = rows.Select(r => new object[]
-            {
-                r.InvoiceNumber, r.Customer, r.InvoiceDate, r.SubTotal, r.InvoiceDiscountPct,
-                r.InvoiceDiscountAmt, r.TotalAmount, r.Status, r.CreatedBy
-            });
-
-            var bytes = ExcelExportHelper.Build(Resources.Labels.Invoices, columns, data);
+        // GET: Invoices/Export  (Excel list)
+        public ActionResult Export(string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
+        {
+            var t = BuildInvoiceTable(dateFrom, dateTo, customerId, status);
+            var bytes = ExcelExportHelper.Build(t.Title, t.Columns, t.Rows);
             return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Invoices"));
+        }
+
+        // GET: Invoices/ExportPdf  (printable list; use the browser's "Save as PDF")
+        public ActionResult ExportPdf(string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
+        {
+            return View("~/Views/Shared/ListReport.cshtml", BuildInvoiceTable(dateFrom, dateTo, customerId, status));
+        }
+
+        // GET: Invoices/ExportDetails/5  (Excel for a single invoice)
+        public ActionResult ExportDetails(int id)
+        {
+            var invoice = GetInvoiceDetails(id);
+            if (invoice == null)
+                return HttpNotFound();
+
+            var bytes = ExcelExportHelper.BuildInvoice(invoice);
+            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Invoice_" + invoice.InvoiceNumber));
         }
 
         // GET: Invoices/Create

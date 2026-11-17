@@ -178,6 +178,7 @@
     <Compile Include="Models\ViewModels\CategoryViewModel.cs" />
     <Compile Include="Models\ViewModels\CustomerViewModel.cs" />
     <Compile Include="Models\ViewModels\InvoiceViewModels.cs" />
+    <Compile Include="Models\ViewModels\TableReport.cs" />
     <Compile Include="Models\ViewModels\LoginViewModel.cs" />
     <Compile Include="Models\ViewModels\ProductViewModel.cs" />
     <Compile Include="Models\ViewModels\UserViewModel.cs" />
@@ -254,6 +255,7 @@
     <Content Include="Views\Invoices\Index.cshtml" />
     <Content Include="Views\Invoices\Details.cshtml" />
     <Content Include="Views\Invoices\Print.cshtml" />
+    <Content Include="Views\Shared\ListReport.cshtml" />
     <Content Include="Views\Shared\_Pagination.cshtml" />
     <Content Include="Views\Users\Index.cshtml" />
     <Content Include="Views\Users\Create.cshtml" />
