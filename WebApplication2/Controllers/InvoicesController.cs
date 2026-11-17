@@ -129,6 +129,12 @@ namespace WebApplication2.Controllers
                 }
             }
 
+            if (model.InvoiceDiscountPct < 0 || model.InvoiceDiscountPct > 100)
+            {
+                ModelState.AddModelError("", Resources.Labels.InvoiceInvalidDiscount);
+                return View(model);
+            }
+
             if (!ModelState.IsValid)
                 return View(model);
 
