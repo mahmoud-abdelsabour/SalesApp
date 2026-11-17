@@ -157,6 +157,11 @@ namespace WebApplication2.Controllers
                     decimal subTotal = 0;
                     var invoiceItems = new List<InvoiceItem>();
 
+                    // Total requested per product (the same product may appear on several lines)
+                    var requestedByProduct = model.Items
+                        .GroupBy(i => i.ProductId)
+                        .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
+
                     foreach (var item in model.Items)
                     {
                         var product = db.Products.Find(item.ProductId);
@@ -175,7 +180,7 @@ namespace WebApplication2.Controllers
                             return View(model);
                         }
 
-                        if (item.Quantity > product.StockQuantity)
+                        if (requestedByProduct[item.ProductId] > product.StockQuantity)
                         {
                             ModelState.AddModelError("", product.NameEn + ": " + Resources.Labels.InvoiceExceedsStock +
                                 " (Available: " + product.StockQuantity + ")");
