@@ -193,6 +193,14 @@ namespace WebApplication2.Controllers
             }
 
             user.IsActive = !user.IsActive;
+
+            // Deactivated users must be signed out everywhere: drop their active sessions
+            if (!user.IsActive)
+            {
+                var sessions = db.ConcurrentSessions.Where(s => s.UserId == user.Id).ToList();
+                db.ConcurrentSessions.RemoveRange(sessions);
+            }
+
             db.SaveChanges();
 
             string message = user.IsActive ? Resources.Labels.SaveSuccess : Resources.Labels.UserDeactivated;
