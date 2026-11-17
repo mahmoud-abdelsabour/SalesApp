@@ -260,7 +260,8 @@ namespace WebApplication2.Controllers
                     transaction.Commit();
 
                     TempData["Success"] = Resources.Labels.InvoiceSaved;
-                    return RedirectToAction("Details", new { id = invoice.Id });
+                    // Details page prints the invoice automatically (print=true)
+                    return RedirectToAction("Details", new { id = invoice.Id, print = true });
                 }
                 catch (System.Data.Entity.Infrastructure.DbUpdateConcurrencyException)
                 {
@@ -281,7 +282,28 @@ namespace WebApplication2.Controllers
         // GET: Invoices/Details/5
         public ActionResult Details(int id)
         {
-            var invoice = db.Invoices
+            var invoice = GetInvoiceDetails(id);
+
+            if (invoice == null)
+                return HttpNotFound();
+
+            return View(invoice);
+        }
+
+        // GET: Invoices/Print/5  (standalone printable page; use the browser's "Save as PDF")
+        public ActionResult Print(int id)
+        {
+            var invoice = GetInvoiceDetails(id);
+
+            if (invoice == null)
+                return HttpNotFound();
+
+            return View(invoice);
+        }
+
+        private InvoiceDetailsViewModel GetInvoiceDetails(int id)
+        {
+            return db.Invoices
                 .Where(i => i.Id == id)
                 .Select(i => new InvoiceDetailsViewModel
                 {
@@ -310,11 +332,6 @@ namespace WebApplication2.Controllers
                     }).ToList()
                 })
                 .FirstOrDefault();
-
-            if (invoice == null)
-                return HttpNotFound();
-
-            return View(invoice);
         }
 
         // GET: Invoices/GetProducts?categoryId=1

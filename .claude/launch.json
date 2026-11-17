@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vs-running-app",
+      "url": "https://localhost:44384",
+      "port": 44384
+    }
+  ]
+}

@@ -55,6 +55,9 @@ namespace WebApplication2.Filters
 
         protected override void HandleUnauthorizedRequest(AuthorizationContext filterContext)
         {
+            // Drop a stale login cookie (e.g. its session was taken over or expired);
+            // otherwise Login would see an "authenticated" user and redirect back here forever.
+            FormsAuthentication.SignOut();
             filterContext.Result = new RedirectResult("~/Auth/Login");
         }
     }

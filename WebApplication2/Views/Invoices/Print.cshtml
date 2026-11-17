@@ -1,0 +1,216 @@
+﻿@model WebApplication2.Models.ViewModels.InvoiceDetailsViewModel
+@{
+    Layout = null;
+    var isArabic = WebApplication2.Helpers.LanguageHelper.IsArabic();
+    var dir = isArabic ? "rtl" : "ltr";
+    var lang = isArabic ? "ar" : "en";
+    var createdByLabel = isArabic ? "أنشأها" : "Created By";
+    var saveLabel = isArabic ? "طباعة / حفظ PDF" : "Print / Save as PDF";
+    var backLabel = isArabic ? "رجوع" : "Back";
+    var hint = isArabic ? "في نافذة الطباعة اختر «حفظ كـ PDF»." : "In the print dialog choose \"Save as PDF\".";
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@WebApplication2.Resources.Labels.InvoiceNumber @Model.InvoiceNumber</title>
+    <style>
+        @@page { size: A4; margin: 14mm; }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #f3f4f6;
+            color: #1A202C;
+            font-family: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .toolbar {
+            max-width: 800px;
+            margin: 16px auto 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+            .toolbar a, .toolbar button {
+                padding: 8px 16px;
+                border-radius: 8px;
+                border: none;
+                font-size: 14px;
+                cursor: pointer;
+                text-decoration: none;
+            }
+
+        .btn-back { background: #e5e7eb; color: #374151; }
+        .btn-print { background: #1B6CA8; color: #fff; }
+        .hint { max-width: 800px; margin: 6px auto 0; padding: 0 16px; color: #6b7280; font-size: 12px; }
+
+        .sheet {
+            max-width: 800px;
+            margin: 16px auto;
+            background: #fff;
+            padding: 36px 40px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08);
+            position: relative;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1B6CA8; padding-bottom: 16px; margin-bottom: 20px; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 56px; height: 56px; }
+        .brand h1 { margin: 0; font-size: 22px; color: #0D1B2A; }
+        .brand p { margin: 0; color: #6b7280; font-size: 12px; }
+        .meta { text-align: end; }
+        .meta h2 { margin: 0 0 4px; font-size: 18px; }
+        .meta p { margin: 0; color: #4b5563; }
+
+        .status { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+        .status-confirmed { background: #DCFCE7; color: #166534; }
+        .status-cancelled { background: #FEE2E2; color: #991B1B; }
+        .status-draft { background: #FEF3C7; color: #92400E; }
+
+        .parties { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .parties h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; color: #6b7280; }
+        .parties p { margin: 0; }
+
+        table { width: 100%; border-collapse: collapse; }
+        .items th { background: #0D1B2A; color: #fff; padding: 8px 10px; font-size: 13px; text-align: start; }
+        .items td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }
+        .num { text-align: end; white-space: nowrap; }
+        tr { page-break-inside: avoid; }
+
+        .totals { width: 45%; margin-inline-start: auto; margin-top: 16px; }
+        .totals td { padding: 6px 10px; }
+        .totals .grand td { background: #E8F1FA; font-weight: 700; font-size: 15px; border-top: 2px solid #1B6CA8; }
+
+        .notes { margin-top: 20px; }
+        .notes h3 { margin: 0 0 4px; font-size: 13px; color: #6b7280; }
+
+        .watermark {
+            position: absolute; top: 40%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 96px; font-weight: 800; color: rgba(220,38,38,.12);
+            pointer-events: none; letter-spacing: 6px;
+        }
+
+        .footer { margin-top: 32px; text-align: center; color: #9ca3af; font-size: 12px; }
+
+        @@media print {
+            body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .toolbar, .hint { display: none !important; }
+            .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <a href="@Url.Action("Details", new { id = Model.Id })" class="btn-back">@backLabel</a>
+        <button type="button" class="btn-print" onclick="window.print()">@saveLabel</button>
+    </div>
+    <div class="hint">@hint</div>
+
+    <div class="sheet">
+        @if (Model.Status == "Cancelled")
+        {
+            <div class="watermark">@WebApplication2.Resources.Labels.StatusCancelled</div>
+        }
+
+        <div class="header">
+            <div class="brand">
+                <img src="@Url.Content("~/Content/logo.svg")" alt="Logo" />
+                <div>
+                    <h1>@WebApplication2.Resources.Labels.AppName</h1>
+                    <p>@WebApplication2.Resources.Labels.CreateInvoice</p>
+                </div>
+            </div>
+            <div class="meta">
+                <h2>@WebApplication2.Resources.Labels.InvoiceNumber: @Model.InvoiceNumber</h2>
+                <p>@WebApplication2.Resources.Labels.InvoiceDate: @Model.InvoiceDate.ToString("yyyy-MM-dd HH:mm")</p>
+                @if (Model.Status == "Confirmed")
+                {
+                    <span class="status status-confirmed">@WebApplication2.Resources.Labels.StatusConfirmed</span>
+                }
+                else if (Model.Status == "Cancelled")
+                {
+                    <span class="status status-cancelled">@WebApplication2.Resources.Labels.StatusCancelled</span>
+                }
+                else
+                {
+                    <span class="status status-draft">@WebApplication2.Resources.Labels.StatusDraft</span>
+                }
+            </div>
+        </div>
+
+        <div class="parties">
+            <div>
+                <h3>@WebApplication2.Resources.Labels.InvoiceCustomer</h3>
+                <p><strong>@Model.CustomerName</strong></p>
+                <p>@Model.CustomerPhone</p>
+                <p>@Model.CustomerEmail</p>
+            </div>
+            <div style="text-align:end">
+                <h3>@createdByLabel</h3>
+                <p>@Model.CreatedBy</p>
+            </div>
+        </div>
+
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>@WebApplication2.Resources.Labels.InvoiceProducts</th>
+                    <th class="num">@WebApplication2.Resources.Labels.InvoiceUnitPrice</th>
+                    <th class="num">@WebApplication2.Resources.Labels.InvoiceQty</th>
+                    <th class="num">@WebApplication2.Resources.Labels.InvoiceDiscount</th>
+                    <th class="num">@WebApplication2.Resources.Labels.InvoiceLineTotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{int n = 1;}
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@n</td>
+                        <td>@item.ProductName</td>
+                        <td class="num">@item.UnitPrice.ToString("N2")</td>
+                        <td class="num">@item.Quantity</td>
+                        <td class="num">@item.DiscountPct.ToString("N2")%</td>
+                        <td class="num">@item.LineTotal.ToString("N2")</td>
+                    </tr>
+                    n++;
+                }
+            </tbody>
+        </table>
+
+        <table class="totals">
+            <tr>
+                <td>@WebApplication2.Resources.Labels.InvoiceSubTotal</td>
+                <td class="num">@Model.SubTotal.ToString("N2")</td>
+            </tr>
+            <tr>
+                <td>@WebApplication2.Resources.Labels.InvoiceDiscountAmt (@Model.InvoiceDiscountPct.ToString("N2")%)</td>
+                <td class="num">@Model.InvoiceDiscountAmt.ToString("N2")</td>
+            </tr>
+            <tr class="grand">
+                <td>@WebApplication2.Resources.Labels.InvoiceTotal</td>
+                <td class="num">@Model.TotalAmount.ToString("N2")</td>
+            </tr>
+        </table>
+
+        @if (!string.IsNullOrEmpty(Model.Notes))
+        {
+            <div class="notes">
+                <h3>@WebApplication2.Resources.Labels.InvoiceNotes</h3>
+                <p>@Model.Notes</p>
+            </div>
+        }
+
+        <div class="footer">@WebApplication2.Resources.Labels.AppName</div>
+    </div>
+</body>
+</html>
