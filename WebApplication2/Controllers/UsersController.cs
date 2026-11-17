@@ -118,11 +118,29 @@ namespace WebApplication2.Controllers
             if (user == null)
                 return HttpNotFound();
 
+            bool renamedSelf = user.Username == User.Identity.Name && user.Username != model.Username;
+
             user.Username = model.Username;
             user.FullName = model.FullName;
             user.Email = model.Email;
 
             db.SaveChanges();
+
+            // The login cookie stores the username: reissue it so the current session keeps working
+            if (renamedSelf)
+            {
+                var cookie = Request.Cookies[System.Web.Security.FormsAuthentication.FormsCookieName];
+                var oldTicket = cookie == null ? null : System.Web.Security.FormsAuthentication.Decrypt(cookie.Value);
+                if (oldTicket != null)
+                {
+                    var newTicket = new System.Web.Security.FormsAuthenticationTicket(
+                        oldTicket.Version, user.Username, oldTicket.IssueDate,
+                        oldTicket.Expiration, oldTicket.IsPersistent, oldTicket.UserData);
+                    Response.Cookies.Add(new System.Web.HttpCookie(
+                        System.Web.Security.FormsAuthentication.FormsCookieName,
+                        System.Web.Security.FormsAuthentication.Encrypt(newTicket)));
+                }
+            }
 
             TempData["Success"] = Resources.Labels.SaveSuccess;
             return RedirectToAction("Index");
