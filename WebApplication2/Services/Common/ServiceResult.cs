@@ -50,5 +50,10 @@ namespace WebApplication2.Services.Common
         {
             return new ServiceResult<T> { Success = false, Error = error, Field = field };
         }
+
+        public static new ServiceResult<T> NotFound(string error = null)
+        {
+            return new ServiceResult<T> { Success = false, IsNotFound = true, Error = error };
+        }
     }
 }

@@ -194,6 +194,7 @@
     <Compile Include="Services\InvoiceService.cs" />
     <Compile Include="Services\ProductService.cs" />
     <Compile Include="Services\SessionService.cs" />
+    <Compile Include="Services\UserService.cs" />
     <Compile Include="Resources\Labels.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

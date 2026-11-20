@@ -1,43 +1,23 @@
-﻿using System;
-using System.Linq;
-using System.Web.Mvc;
-using WebApplication2.Filters;
+﻿using System.Web.Mvc;
 using WebApplication2.Helpers;
-using WebApplication2.Models.Data;
-using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
 using WebApplication2.Services;
 
 namespace WebApplication2.Controllers
 {
-    [CustomAuthorize]
-    public class UsersController : Controller
+    public class UsersController : AppController
     {
-        private readonly AppDbContext db = new AppDbContext();
-        private readonly SessionService sessions;
+        private readonly UserService users;
 
         public UsersController()
         {
-            sessions = new SessionService(db);
+            users = new UserService(Db, new SessionService(Db));
         }
 
         // GET: Users
         public ActionResult Index()
         {
-            var users = db.Users
-                .Select(u => new UserViewModel
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt
-                })
-                .OrderBy(u => u.Username)
-                .ToList();
-
-            return View(users);
+            return View(users.GetAll());
         }
 
         // GET: Users/Create
@@ -57,46 +37,22 @@ namespace WebApplication2.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Check username uniqueness
-            bool exists = db.Users.Any(u => u.Username.ToLower() == model.Username.ToLower());
-            if (exists)
+            var result = users.Create(model);
+            if (!result.Success)
             {
-                ModelState.AddModelError("Username", Resources.Labels.UsernameDuplicate);
+                AddModelError(result);
                 return View(model);
             }
 
-            var user = new User
-            {
-                Username = model.Username,
-                FullName = model.FullName,
-                Email = model.Email,
-                PasswordEncrypted = PasswordHelper.Hash(model.Password),
-                IsActive = true,
-                CreatedAt = DateTime.Now
-            };
-
-            db.Users.Add(user);
-            db.SaveChanges();
-
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // GET: Users/Edit/5
         public ActionResult Edit(int id)
         {
-            var user = db.Users.Find(id);
-            if (user == null)
+            var model = users.Get(id);
+            if (model == null)
                 return HttpNotFound();
-
-            var model = new UserViewModel
-            {
-                Id = user.Id,
-                Username = user.Username,
-                FullName = user.FullName,
-                Email = user.Email,
-                IsActive = user.IsActive
-            };
 
             return View(model);
         }
@@ -106,64 +62,45 @@ namespace WebApplication2.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, UserViewModel model)
         {
-            // Remove password validation for edit
+            // The password isn't edited here
             ModelState.Remove("Password");
 
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Check username uniqueness excluding self
-            bool exists = db.Users.Any(u =>
-                u.Username.ToLower() == model.Username.ToLower() && u.Id != id);
-            if (exists)
+            var result = users.Update(id, model, User.Identity.Name);
+            if (result.IsNotFound)
+                return HttpNotFound();
+            if (!result.Success)
             {
-                ModelState.AddModelError("Username", Resources.Labels.UsernameDuplicate);
+                AddModelError(result);
                 return View(model);
             }
 
-            var user = db.Users.Find(id);
-            if (user == null)
-                return HttpNotFound();
-
-            bool renamedSelf = user.Username == User.Identity.Name && user.Username != model.Username;
-
-            user.Username = model.Username;
-            user.FullName = model.FullName;
-            user.Email = model.Email;
-
-            db.SaveChanges();
-
             // The login cookie stores the username: reissue it so the current session keeps working
-            if (renamedSelf)
+            if (result.Value)
             {
-                var cookie = AuthCookieHelper.CreateRenamedCookie(Request, user.Username);
+                var cookie = AuthCookieHelper.CreateRenamedCookie(Request, model.Username);
                 if (cookie != null)
                     Response.Cookies.Add(cookie);
             }
 
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // GET: Users/ResetPassword/5
         public ActionResult ResetPassword(int id)
         {
-            var user = db.Users.Find(id);
-            if (user == null)
+            var form = users.GetResetPasswordForm(id, User.Identity.Name);
+            if (form.IsNotFound)
                 return HttpNotFound();
-
-            // Only allow resetting own password
-            if (user.Username != User.Identity.Name)
+            if (!form.Success)
             {
-                TempData["Error"] = "You can only reset your own password.";
+                TempData["Error"] = form.Error;
                 return RedirectToAction("Index");
             }
 
-            return View(new ResetPasswordViewModel
-            {
-                Id = user.Id,
-                Username = user.Username
-            });
+            return View(form.Value);
         }
 
         // POST: Users/ResetPassword/5
@@ -174,22 +111,16 @@ namespace WebApplication2.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var user = db.Users.Find(id);
-            if (user == null)
+            var result = users.ResetPassword(id, model, User.Identity.Name);
+            if (result.IsNotFound)
                 return HttpNotFound();
-
-            // Only allow resetting own password
-            if (user.Username != User.Identity.Name)
+            if (!result.Success)
             {
-                TempData["Error"] = "You can only reset your own password.";
+                TempData["Error"] = result.Error;
                 return RedirectToAction("Index");
             }
 
-            user.PasswordEncrypted = PasswordHelper.Hash(model.NewPassword);
-            db.SaveChanges();
-
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // POST: Users/ToggleActive/5
@@ -197,42 +128,17 @@ namespace WebApplication2.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult ToggleActive(int id)
         {
-            var user = db.Users.Find(id);
-            if (user == null)
-                return Json(new { success = false, message = "User not found." });
+            var result = users.ToggleActive(id, User.Identity.Name, AuthCookieHelper.GetSessionToken(Request));
+            if (!result.Success)
+                return Json(new { success = false, message = result.Error });
 
-            // Cannot deactivate last active user
-            if (user.IsActive)
+            return Json(new
             {
-                int activeCount = db.Users.Count(u => u.IsActive);
-                if (activeCount <= 1)
-                    return Json(new { success = false, message = Resources.Labels.CannotDeactivateLastAdmin });
-            }
-
-            user.IsActive = !user.IsActive;
-
-            // Deactivated users must be signed out everywhere (saved together with the status change)
-            if (!user.IsActive)
-                sessions.EndAllSessions(user.Id);
-
-            db.SaveChanges();
-
-            string message = user.IsActive ? Resources.Labels.SaveSuccess : Resources.Labels.UserDeactivated;
-
-            // If user deactivated themselves, sign them out
-            if (!user.IsActive && user.Username == User.Identity.Name)
-            {
-                sessions.EndSession(AuthCookieHelper.GetSessionToken(Request));
-                return Json(new { success = true, message, isActive = user.IsActive, signOut = true });
-            }
-
-            return Json(new { success = true, message, isActive = user.IsActive, signOut = false });
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) db.Dispose();
-            base.Dispose(disposing);
+                success = true,
+                message = result.Message,
+                isActive = result.Value.IsActive,
+                signOut = result.Value.SignOut
+            });
         }
     }
 }
