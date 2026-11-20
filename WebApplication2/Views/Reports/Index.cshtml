@@ -1,0 +1,196 @@
+﻿@model WebApplication2.Models.ViewModels.ReportsViewModel
+@{
+    var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
+    Func<string, string, string> L = (en, arText) => ar ? arText : en;
+
+    ViewBag.Title = L("Reports", "التقارير");
+    var from = Model.From.ToString("yyyy-MM-dd");
+    var to = Model.To.ToString("yyyy-MM-dd");
+
+    // Chart data comes from the whole period (not just the visible table page)
+    var dateLabels = Model.DateChart.Select(p => p.Label).ToList();
+    var dateValues = Model.DateChart.Select(p => p.Value).ToList();
+    var custLabels = Model.CustomerChart.Select(p => p.Label).ToList();
+    var custValues = Model.CustomerChart.Select(p => p.Value).ToList();
+    var prodLabels = Model.ProductChart.Select(p => p.Label).ToList();
+    var prodValues = Model.ProductChart.Select(p => p.Value).ToList();
+}
+
+<!-- Filter -->
+<div class="card mb-3">
+    <div class="card-header"><i class="fas fa-chart-bar mr-2"></i>@L("Sales Reports", "تقارير المبيعات")</div>
+    <div class="card-body">
+        <form method="get" action="/Reports/Index" id="rangeForm" class="form-row align-items-end">
+            <div class="col-md-3 mb-2">
+                <label class="small mb-1">@L("From", "من")</label>
+                <input type="date" name="from" id="fromDate" value="@from" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3 mb-2">
+                <label class="small mb-1">@L("To", "إلى")</label>
+                <input type="date" name="to" id="toDate" value="@to" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-6 mb-2">
+                <button type="submit" class="btn btn-sm btn-primary mr-1">
+                    <i class="fas fa-filter mr-1"></i>@L("Apply", "تطبيق")
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-days="0">@L("Today", "اليوم")</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-days="6">@L("7 days", "٧ أيام")</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-days="29">@L("30 days", "٣٠ يوم")</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-month="1">@L("This month", "هذا الشهر")</button>
+            </div>
+        </form>
+        <small class="text-muted">@L("Only confirmed invoices are counted (cancelled invoices are excluded).", "تُحتسب الفواتير المؤكدة فقط (الفواتير الملغاة مستبعدة).")</small>
+    </div>
+</div>
+
+<!-- Summary cards -->
+<div class="row mb-3">
+    <div class="col-6 col-lg-3 mb-2">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">@L("Total Sales", "إجمالي المبيعات")</div>
+            <div class="h4 mb-0 text-primary">@Model.TotalRevenue.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 mb-2">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">@L("Invoices", "الفواتير")</div>
+            <div class="h4 mb-0">@Model.InvoiceCount</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 mb-2">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">@L("Average Invoice", "متوسط الفاتورة")</div>
+            <div class="h4 mb-0">@Model.AverageInvoice.ToString("N2")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 mb-2">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">@L("Items Sold", "الوحدات المباعة")</div>
+            <div class="h4 mb-0">@Model.ItemsSold</div>
+        </div></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="card">
+    <div class="card-header p-0 border-bottom-0">
+        <ul class="nav nav-tabs px-3 pt-2" id="reportTabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" id="tab-date-link" data-toggle="tab" href="#tab-date" role="tab">
+                <i class="fas fa-calendar-day mr-1"></i>@L("By Date", "حسب التاريخ")</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-customer-link" data-toggle="tab" href="#tab-customer" role="tab">
+                <i class="fas fa-users mr-1"></i>@L("By Customer", "حسب العميل")</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-product-link" data-toggle="tab" href="#tab-product" role="tab">
+                <i class="fas fa-box mr-1"></i>@L("By Product", "حسب المنتج")</a></li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+
+        @* ---- By Date ---- *@
+        <div class="tab-pane fade show active" id="tab-date" role="tabpanel">
+            <div class="d-flex justify-content-end mb-2">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = "date", from = from, to = to })">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = "date", from = from, to = to })">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+            <div style="height:280px" class="mb-3"><canvas id="chartDate"></canvas></div>
+            @Html.Partial("_ReportTable", Model.ByDate)
+            @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Param = "dp", TabHash = "#tab-date", Table = Model.ByDate, Report = Model })
+        </div>
+
+        @* ---- By Customer ---- *@
+        <div class="tab-pane fade" id="tab-customer" role="tabpanel">
+            <div class="d-flex justify-content-end mb-2">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = "customer", from = from, to = to })">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = "customer", from = from, to = to })">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+            <div style="height:320px" class="mb-3"><canvas id="chartCustomer"></canvas></div>
+            @Html.Partial("_ReportTable", Model.ByCustomer)
+            @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Param = "cp", TabHash = "#tab-customer", Table = Model.ByCustomer, Report = Model })
+        </div>
+
+        @* ---- By Product ---- *@
+        <div class="tab-pane fade" id="tab-product" role="tabpanel">
+            <div class="d-flex justify-content-end mb-2">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = "product", from = from, to = to })">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = "product", from = from, to = to })">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+            <div style="height:320px" class="mb-2"><canvas id="chartProduct"></canvas></div>
+            <small class="text-muted d-block mb-3">@L("Revenue is before invoice-level discount.", "الإيراد قبل خصم الفاتورة.")</small>
+            @Html.Partial("_ReportTable", Model.ByProduct)
+            @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Param = "pp", TabHash = "#tab-product", Table = Model.ByProduct, Report = Model })
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        var colors = ['#1B6CA8', '#2D9B6F', '#F4A261', '#E63946', '#00B4D8', '#9B5DE5', '#6C757D', '#FFB703', '#8338EC', '#06D6A0'];
+        var salesLabel = '@L("Sales", "المبيعات")';
+        var noDataText = '@L("No data in this period", "لا توجد بيانات في هذه الفترة")';
+
+        function emptyOrChart(canvasId, labels, build) {
+            if (labels.length === 0) {
+                $('#' + canvasId).parent().html('<p class="text-center text-muted pt-5">' + noDataText + '</p>');
+                return;
+            }
+            build();
+        }
+
+        var dateLabels = @Html.Raw(Json.Encode(dateLabels));
+        var dateValues = @Html.Raw(Json.Encode(dateValues));
+        emptyOrChart('chartDate', dateLabels, function () {
+            new Chart(document.getElementById('chartDate'), {
+                type: 'line',
+                data: { labels: dateLabels, datasets: [{ label: salesLabel, data: dateValues, borderColor: '#1B6CA8',
+                    backgroundColor: 'rgba(27,108,168,0.1)', fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } } }
+            });
+        });
+
+        function barChart(canvasId, labels, values) {
+            emptyOrChart(canvasId, labels, function () {
+                new Chart(document.getElementById(canvasId), {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ label: salesLabel, data: values, backgroundColor: colors }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+                });
+            });
+        }
+        barChart('chartCustomer', @Html.Raw(Json.Encode(custLabels)), @Html.Raw(Json.Encode(custValues)));
+        barChart('chartProduct', @Html.Raw(Json.Encode(prodLabels)), @Html.Raw(Json.Encode(prodValues)));
+
+        // Quick ranges
+        function fmt(d) {
+            var m = ('0' + (d.getMonth() + 1)).slice(-2), day = ('0' + d.getDate()).slice(-2);
+            return d.getFullYear() + '-' + m + '-' + day;
+        }
+        $('.quick-range').on('click', function () {
+            var today = new Date(), start = new Date();
+            if ($(this).data('month')) { start = new Date(today.getFullYear(), today.getMonth(), 1); }
+            else { start.setDate(today.getDate() - parseInt($(this).data('days'), 10)); }
+            $('#fromDate').val(fmt(start));
+            $('#toDate').val(fmt(today));
+            $('#rangeForm').submit();
+        });
+
+        // Remember the active tab across filter submits
+        $('#reportTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            history.replaceState(null, '', e.target.getAttribute('href'));
+        });
+        if (location.hash && $('#reportTabs a[href="' + location.hash + '"]').length) {
+            $('#reportTabs a[href="' + location.hash + '"]').tab('show');
+        }
+        $('#rangeForm').on('submit', function () {
+            var h = $('#reportTabs a.active').attr('href');
+            if (h) this.action = '/Reports/Index' + h;
+        });
+    </script>
+}

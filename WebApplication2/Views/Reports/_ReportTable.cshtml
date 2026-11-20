@@ -1,0 +1,36 @@
+﻿@model WebApplication2.Models.ViewModels.TableReport
+@{
+    var noData = WebApplication2.Helpers.LanguageHelper.IsArabic() ? "لا توجد بيانات في هذه الفترة" : "No data in this period";
+}
+<div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+        <thead class="thead-light">
+            <tr>
+                @foreach (var col in Model.Columns)
+                {
+                    <th>@col.Header</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="@Model.Columns.Count" class="text-center text-muted py-4">@noData</td></tr>
+            }
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    @for (int c = 0; c < Model.Columns.Count; c++)
+                    {
+                        var value = row[c];
+                        string text;
+                        if (value is DateTime) { text = ((DateTime)value).ToString("yyyy-MM-dd"); }
+                        else if (value is decimal) { text = ((decimal)value).ToString("N2"); }
+                        else { text = value == null ? "" : value.ToString(); }
+                        <td>@text</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
