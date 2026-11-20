@@ -49,7 +49,9 @@ VTS Sales is a web-based point-of-sale and sales management system designed for 
 | UI Libraries | Select2 4.x (searchable dropdowns), SweetAlert2 (alerts & confirms) |
 | Charts | Chart.js 3.9 |
 | Auth | FormsAuthentication with custom concurrent-session control |
-| Encryption | TripleDES (3DES) — 2-way reversible |
+| Password hashing | PBKDF2 (HMAC-SHA256, 100,000 iterations, per-user salt) |
+| Excel export | EPPlus 4.5.3.3 |
+| PDF | Printable, RTL-aware pages saved as PDF from the browser's print dialog |
 | i18n | .resx Resource Files (en-US + ar-EG) |
 | Icons | Font Awesome 6 |
 | Hosting | SmarterASP.NET (free tier) |
@@ -61,12 +63,12 @@ VTS Sales is a web-based point-of-sale and sales management system designed for 
 ### Core Requirements and Features
 - **Login** with 3-hour session, auto-redirect if already logged in within session window
 - **Concurrent login prevention** — same account cannot be logged in from two devices simultaneously
-- **Categories CRUD** with cascading delete to products
+- **Categories CRUD** (a category can't be deleted while it has active products)
 - **Products CRUD** with soft delete for products with invoice history
 - **Customers CRUD** with phone uniqueness validation
 - **Sales Invoice** — multi-product, per-line discount, invoice-level discount
 - **Idle timeout** — 2-minute inactivity warning via SweetAlert2 dialog
-- **2-way password encryption** using TripleDES
+- **One-way password hashing** with PBKDF2; old reversible passwords are upgraded on first login
 - **Client-side + server-side validation** on all forms
 - **Responsive mobile layout** with different icon order on mobile vs desktop
 - **Arabic + English** language support with RTL layout for Arabic
@@ -77,6 +79,11 @@ VTS Sales is a web-based point-of-sale and sales management system designed for 
 - **Pagination** on all list pages (Categories: 10/page, Products/Customers: 15/page, Invoices: 20/page)
 - **Invoice search & filter** — by date range, customer, and status
 - **Collapsible sidebar navigation** — collapses to icon-only, mobile overlay, state persisted in localStorage, RTL-aware
+- **Take over session** — signing in while already logged in elsewhere offers a confirmed take-over
+- **Printable invoice / PDF** — standalone A4 invoice page with logo (Arabic/RTL-aware), opens the print dialog automatically after an invoice is created
+- **Excel + PDF exports** for invoices, products and customers (honouring the current filters, never paginated), plus a single-invoice Excel export
+- **Sales reports** — overview plus Sales by Date, by Customer and by Product, each with a chart, a server-side paginated table and Excel/PDF export
+- **Concurrency safety** — row-version check on products, unique invoice numbers with retry, transactional stock deduction and restore on cancel
 
 ---
 
@@ -87,7 +94,7 @@ The database consists of 7 tables managed via Entity Framework Code First migrat
 ### Tables
 
 #### Users
-Stores login accounts. Passwords are stored as TripleDES-encrypted strings, never plaintext.
+Stores login accounts. Passwords are stored as PBKDF2 hashes (`PBKDF2$iterations$salt$hash`), never plaintext or reversible. The column is still named `PasswordEncrypted`.
 ```
 Id | Username | PasswordEncrypted | FullName | Email | IsActive | CreatedAt
 ```
@@ -138,27 +145,45 @@ Id | InvoiceId (FK→Invoices, CASCADE) | ProductId (FK→Products, NO CASCADE) 
 
 ## Project Structure
 
+The app is layered: **controllers stay thin** (read the request, call a service, return a view / JSON / file) and **all application logic lives in services**.
+
 ```
 WebApplication2/
 ├── Controllers/
-│   ├── AuthController.cs          Login, logout, keep-alive, language switch
+│   ├── AppController.cs           Base class: login required, DbContext, shared HTTP helpers
+│   ├── AuthController.cs          Login, take-over, logout, keep-alive, language switch
 │   ├── HomeController.cs          Dashboard + chart data AJAX endpoints
-│   ├── CategoriesController.cs    CRUD + cascade check
-│   ├── ProductsController.cs      CRUD + soft delete + stock
-│   ├── CustomersController.cs     CRUD + phone uniqueness + search AJAX
-│   ├── InvoicesController.cs      Create, list, details, cancel + filter
+│   ├── CategoriesController.cs    CRUD
+│   ├── ProductsController.cs      CRUD + exports
+│   ├── CustomersController.cs     CRUD + search AJAX + exports
+│   ├── InvoicesController.cs      Create, list, details, print, cancel, exports
+│   ├── ReportsController.cs       Reports overview + by date / customer / product
 │   └── UsersController.cs         Create, edit, reset password, toggle active
 │
+├── Services/                      Application logic (one DbContext per request)
+│   ├── Common/                    ServiceResult, PagedResult
+│   ├── SessionService.cs          Login, take-over, single-session control
+│   ├── UserService.cs
+│   ├── CategoryService.cs
+│   ├── CustomerService.cs
+│   ├── ProductService.cs
+│   ├── InvoiceService.cs          Create (stock, numbering, retry), cancel, details, exports
+│   ├── DashboardService.cs
+│   ├── ReportService.cs
+│   └── SalesQueries.cs            One definition of "a sale" (Confirmed invoices)
+│
 ├── Models/
-│   ├── Entities/                  EF entity classes (7 tables)
-│   ├── ViewModels/                DTOs for views
+│   ├── Entities/                  EF entity classes (7 tables) + InvoiceStatus constants
+│   ├── ViewModels/                DTOs for views (incl. TableReport shared by Excel/PDF)
 │   └── Data/
 │       └── AppDbContext.cs        DbContext with relationship config
 │
 ├── Helpers/
-│   ├── EncryptionHelper.cs        3DES encrypt/decrypt
-│   ├── LanguageHelper.cs          Get/set language cookie, apply culture
-│   └── InvoiceNumberHelper.cs     Auto-generate INV-YYYYMMDD-#### 
+│   ├── PasswordHelper.cs          PBKDF2 hashing / verification
+│   ├── EncryptionHelper.cs        LEGACY 3DES (only to upgrade old passwords)
+│   ├── AuthCookieHelper.cs        Login cookie / session token handling
+│   ├── ExcelExportHelper.cs       Styled .xlsx files (tables + single invoice)
+│   └── LanguageHelper.cs          Language cookie, culture, T(en, ar)
 │
 ├── Filters/
 │   └── CustomAuthorizeAttribute.cs  Session token validation on every request
@@ -170,14 +195,13 @@ WebApplication2/
 ├── Views/
 │   ├── Auth/Login.cshtml
 │   ├── Home/Index.cshtml          Dashboard with charts + icon grid
-│   ├── Categories/                Index, Create, Edit
-│   ├── Products/                  Index, Create, Edit
-│   ├── Customers/                 Index, Create, Edit
-│   ├── Invoices/                  Index (with filter), Create, Details
-│   ├── Users/                     Index, Create, Edit, ResetPassword
+│   ├── Categories/ Products/ Customers/ Users/
+│   ├── Invoices/                  Index, Create, Details, Print
+│   ├── Reports/                   Index (overview), ReportPage, shared partials
 │   └── Shared/
 │       ├── _Layout.cshtml         Master layout: sidebar, navbar, idle timer
-│       └── _Pagination.cshtml     Shared pagination partial
+│       ├── _Pagination.cshtml     Shared pagination partial
+│       └── ListReport.cshtml      Printable list / report page (PDF)
 │
 ├── Migrations/                    EF Code First migration files
 ├── Web.config                     Connection string, Forms auth config
@@ -188,10 +212,10 @@ WebApplication2/
 
 ## Security Implementation
 
-### Password Encryption
-All passwords are encrypted using TripleDES (3DES) before storage. The encryption key is stored in `Web.config` under `<appSettings>`. The `EncryptionHelper` class provides `Encrypt(string)` and `Decrypt(string)` methods.
+### Password Hashing
+Passwords are hashed with **PBKDF2 (HMAC-SHA256, 100,000 iterations, 16-byte random salt per user)** and compared in constant time. The stored value is `PBKDF2$iterations$salt$hash`; `PasswordHelper` provides `Hash`, `Verify` and `NeedsUpgrade`.
 
-This is 2-way (reversible) encryption as specified in the requirements. The encrypted value stored in the database is a Base64 string.
+Accounts created before this change still hold the old reversible 3DES value. They keep working and are re-saved as PBKDF2 hashes the first time they log in. `EncryptionHelper` and the `EncryptionKey` setting only exist for that upgrade and can be removed once every user has logged in once.
 
 ### Session Management
 - FormsAuthentication with a 3-hour sliding expiration
@@ -200,7 +224,7 @@ This is 2-way (reversible) encryption as specified in the requirements. The encr
 - If the token is missing or expired: cookie cleared, session row deleted, redirect to login
 
 ### Concurrent Login Prevention
-When a user logs in, the system checks `ConcurrentSessions` for an existing row with the same `UserId`. If found, login is rejected with an "already logged in from another device" message. The session row is deleted on logout, browser close (via idle cleanup), or session expiry.
+When a user logs in, the system checks `ConcurrentSessions` for an existing row with the same `UserId`. If found, the login page explains the account is already in use and offers **Take over session** (with a confirmation and a password re-entry). Taking over deletes the old session row, so the other browser is signed out on its next request. Session rows are also deleted on logout, session expiry and when a user is deactivated.
 
 Expired sessions (older than 3 hours) are automatically cleaned up on every login attempt.
 

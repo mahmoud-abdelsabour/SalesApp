@@ -5,6 +5,11 @@ using System.Text;
 
 namespace WebApplication2.Helpers
 {
+    /// <summary>
+    /// LEGACY: the old reversible 3DES password format. Only PasswordHelper uses it, to recognise
+    /// not-yet-upgraded passwords at login (they are then re-saved as PBKDF2 hashes).
+    /// Safe to delete, together with the EncryptionKey setting, once every user has logged in once.
+    /// </summary>
     public static class EncryptionHelper
     {
         private static readonly string _key = LoadKey();
@@ -35,22 +40,5 @@ namespace WebApplication2.Helpers
             }
         }
 
-        public static string Decrypt(string cipherText)
-        {
-            if (string.IsNullOrEmpty(cipherText)) return cipherText;
-
-            using (var des = new TripleDESCryptoServiceProvider())
-            {
-                des.Key = Encoding.UTF8.GetBytes(_key.PadRight(24).Substring(0, 24));
-                des.IV = Encoding.UTF8.GetBytes(_key.Substring(0, 8));
-                des.Mode = CipherMode.ECB;
-                des.Padding = PaddingMode.PKCS7;
-
-                var transform = des.CreateDecryptor();
-                var bytes = Convert.FromBase64String(cipherText);
-                var result = transform.TransformFinalBlock(bytes, 0, bytes.Length);
-                return Encoding.UTF8.GetString(result);
-            }
-        }
     }
 }
