@@ -12,10 +12,14 @@ namespace WebApplication2.Helpers
         public string Header { get; set; }
         public string Format { get; set; }   // optional Excel number/date format
 
-        public ExcelColumn(string header, string format = null)
+        /// <summary>True for change/growth columns: the report page shows + / - and colors them.</summary>
+        public bool Signed { get; set; }
+
+        public ExcelColumn(string header, string format = null, bool signed = false)
         {
             Header = header;
             Format = format;
+            Signed = signed;
         }
     }
 

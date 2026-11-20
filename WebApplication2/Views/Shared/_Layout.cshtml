@@ -688,6 +688,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "ByPeriod" ? "active" : "")" href="/Reports/ByPeriod" title="@(rAr ? "حسب الفترة" : "Sales by Period")">
+                            <i class="fas fa-chart-line"></i><span class="link-text">@(rAr ? "حسب الفترة" : "Sales by Period")</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link @(isReports && reportAction == "ByCustomer" ? "active" : "")" href="/Reports/ByCustomer" title="@(rAr ? "حسب العميل" : "Sales by Customer")">
                             <i class="fas fa-users"></i><span class="link-text">@(rAr ? "حسب العميل" : "Sales by Customer")</span>
                         </a>

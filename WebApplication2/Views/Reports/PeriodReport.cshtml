@@ -1,0 +1,148 @@
+﻿@model WebApplication2.Models.ViewModels.PeriodReportViewModel
+@{
+    var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
+    Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
+
+    ViewBag.Title = Model.Table.Title;
+    var from = Model.From.ToString("yyyy-MM-dd");
+    var to = Model.To.ToString("yyyy-MM-dd");
+
+    var labels = Model.Chart.Select(p => p.Label).ToList();
+    var values = Model.Chart.Select(p => p.Value).ToList();
+
+    // Switching week / month / year keeps the range only when the user chose one
+    var givenFrom = Request.QueryString["from"];
+    var givenTo = Request.QueryString["to"];
+    Func<string, string> switchUrl = g => Url.Action("ByPeriod", new { granularity = g, from = givenFrom, to = givenTo });
+
+    var exportRoute = new { granularity = Model.Granularity, from = from, to = to };
+
+    // Filters carried by the pager
+    var pagerRoute = new System.Web.Routing.RouteValueDictionary
+    {
+        { "granularity", Model.Granularity },
+        { "from", from },
+        { "to", to }
+    };
+
+    var rangeExtra = new System.Web.Routing.RouteValueDictionary { { "granularity", Model.Granularity } };
+
+    var change = Model.LatestChangePercent;
+}
+
+@Html.Partial("_KpiStyles")
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <span><i class="fas fa-chart-line mr-2"></i>@Model.Table.Title</span>
+        <a href="@Url.Action("Index", new { from = from, to = to })" class="btn btn-sm btn-light">
+            <i class="fas fa-th-large mr-1"></i>@L("Overview", "نظرة عامة")
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="btn-group btn-group-sm mb-3" role="group">
+            <a href="@switchUrl("week")" class="btn @(Model.Granularity == "week" ? "btn-primary" : "btn-outline-primary")">@L("Weekly", "أسبوعي")</a>
+            <a href="@switchUrl("month")" class="btn @(Model.Granularity == "month" ? "btn-primary" : "btn-outline-primary")">@L("Monthly", "شهري")</a>
+            <a href="@switchUrl("year")" class="btn @(Model.Granularity == "year" ? "btn-primary" : "btn-outline-primary")">@L("Yearly", "سنوي")</a>
+        </div>
+
+        @Html.Partial("_RangeFilter", new WebApplication2.Models.ViewModels.ReportRangeModel
+        {
+            Action = "ByPeriod",
+            From = Model.From,
+            To = Model.To,
+            Extra = rangeExtra,
+            PeriodChips = true
+        })
+        <div class="range-note"><i class="fas fa-info-circle mr-1"></i>@L("Periods are shown in full, so the range is widened to whole weeks / months / years.", "تُعرض الفترات كاملة، لذلك يُوسَّع النطاق إلى أسابيع / أشهر / سنوات كاملة.")</div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row mb-2">
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card kpi-hero h-100"><div class="card-body kpi">
+            <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="kpi-label">@L("Total Sales", "إجمالي المبيعات")</div>
+                <div class="kpi-value">@Model.TotalSales.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#E8F1FA;color:#1B6CA8"><i class="fas fa-balance-scale"></i></div>
+            <div>
+                <div class="kpi-label">@L("Average per period", "المتوسط لكل فترة")</div>
+                <div class="kpi-value">@Model.AveragePerPeriod.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#E6F5EE;color:#2D9B6F"><i class="fas fa-trophy"></i></div>
+            <div style="min-width:0">
+                <div class="kpi-label">@L("Best period", "أفضل فترة")</div>
+                <div class="kpi-value" style="font-size:1.05rem">@(Model.BestPeriod ?? "—")</div>
+                @if (Model.BestPeriod != null) { <small class="text-muted">@Model.BestPeriodSales.ToString("N2")</small> }
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:@(change.HasValue && change < 0 ? "#FDE8EA;color:#E63946" : "#E6F5EE;color:#2D9B6F")">
+                <i class="fas fa-arrow-@(change.HasValue && change < 0 ? "down" : "up")"></i>
+            </div>
+            <div style="min-width:0">
+                <div class="kpi-label">@L("Latest change", "آخر تغيير")</div>
+                <div class="kpi-value @(change.HasValue ? (change > 0 ? "text-success" : (change < 0 ? "text-danger" : "")) : "")">
+                    @(change.HasValue ? (change > 0 ? "+" : "") + change.Value.ToString("N2") + "%" : "—")
+                </div>
+                @if (Model.LatestPeriod != null) { <small class="text-muted">@L("vs the period before", "مقارنة بالفترة السابقة")</small> }
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+            <small class="text-muted">@Model.Table.Subtitle</small>
+            <div class="ml-auto">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("ExportPeriod", exportRoute)">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPeriodPdf", exportRoute)">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+        </div>
+
+        <div style="height:300px" class="mb-3"><canvas id="periodChart"></canvas></div>
+
+        @Html.Partial("_ReportTable", Model.Table)
+        @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Action = "ByPeriod", Table = Model.Table, Route = pagerRoute })
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        var labels = @Html.Raw(Json.Encode(labels));
+        var values = @Html.Raw(Json.Encode(values));
+        var salesLabel = '@L("Sales", "المبيعات")';
+
+        if (labels.length === 0) {
+            $('#periodChart').parent().html('<p class="text-center text-muted pt-5">@L("No data in this period", "لا توجد بيانات في هذه الفترة")</p>');
+        } else {
+            // a line needs several points; with only a few periods a bar chart reads better
+            var asBars = labels.length < 4;
+            new Chart(document.getElementById('periodChart'), {
+                type: asBars ? 'bar' : 'line',
+                data: { labels: labels, datasets: [{ label: salesLabel, data: values, borderColor: '#1B6CA8',
+                    backgroundColor: asBars ? '#1B6CA8' : 'rgba(27,108,168,0.12)', fill: true, tension: 0, pointRadius: 3,
+                    maxBarThickness: 60 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } } }
+            });
+        }
+    </script>
+}

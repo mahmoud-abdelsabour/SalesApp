@@ -36,6 +36,10 @@ namespace WebApplication2.Models.ViewModels
         // Daily sales for the trend chart (whole period)
         public List<ChartPoint> DateChart { get; set; }
 
+        // Period headline: this calendar month against the previous one
+        public decimal ThisMonthSales { get; set; }
+        public decimal? MonthGrowthPercent { get; set; }
+
         // Inventory headline: active products at or below the default low-stock threshold
         public int LowStockCount { get; set; }
         public int LowStockThreshold { get; set; }
@@ -63,6 +67,31 @@ namespace WebApplication2.Models.ViewModels
         public string Action { get; set; }
         public DateTime From { get; set; }
         public DateTime To { get; set; }
+
+        /// <summary>Extra values the filter form keeps when it is submitted (e.g. granularity).</summary>
+        public RouteValueDictionary Extra { get; set; }
+
+        /// <summary>Quick buttons for month / year based ranges instead of day based ones.</summary>
+        public bool PeriodChips { get; set; }
+    }
+
+    /// <summary>The sales-by-period page: sales grouped by week, month or year with growth.</summary>
+    public class PeriodReportViewModel
+    {
+        public string Granularity { get; set; }   // week | month | year
+        public DateTime From { get; set; }        // widened to whole periods
+        public DateTime To { get; set; }
+
+        // Summary cards (all periods shown)
+        public decimal TotalSales { get; set; }
+        public decimal AveragePerPeriod { get; set; }
+        public string BestPeriod { get; set; }
+        public decimal BestPeriodSales { get; set; }
+        public decimal? LatestChangePercent { get; set; }
+        public string LatestPeriod { get; set; }
+
+        public TableReport Table { get; set; }
+        public List<ChartPoint> Chart { get; set; }
     }
 
     /// <summary>The inventory / low-stock report page (not date based).</summary>

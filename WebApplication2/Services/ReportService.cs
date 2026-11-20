@@ -53,6 +53,11 @@ namespace WebApplication2.Services
             var topProduct = ProductGroups(f, t).FirstOrDefault();
             var topCategory = CategoryGroups(f, t).FirstOrDefault();
 
+            // this calendar month against the previous one (independent of the chosen period)
+            var monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            decimal thisMonth = db.ConfirmedInvoices(monthStart, monthStart.AddMonths(1).AddDays(-1)).Sum(i => (decimal?)i.TotalAmount) ?? 0m;
+            decimal lastMonth = db.ConfirmedInvoices(monthStart.AddMonths(-1), monthStart.AddDays(-1)).Sum(i => (decimal?)i.TotalAmount) ?? 0m;
+
             return new ReportsViewModel
             {
                 From = f,
@@ -70,6 +75,8 @@ namespace WebApplication2.Services
                 TopCategory = topCategory == null ? null : topCategory.Name,
                 TopCategoryRevenue = topCategory == null ? 0m : topCategory.Revenue,
                 DateChart = DateChart(days),
+                ThisMonthSales = thisMonth,
+                MonthGrowthPercent = lastMonth == 0 ? (decimal?)null : Math.Round((thisMonth - lastMonth) * 100 / lastMonth, 2),
                 LowStockThreshold = DefaultLowStockThreshold,
                 LowStockCount = db.Products.Count(p => p.IsActive && p.StockQuantity <= DefaultLowStockThreshold)
             };
@@ -150,6 +157,230 @@ namespace WebApplication2.Services
                 case "category": return BuildCategoryTable(f, t, null);
                 default: return BuildDateTable(f, t, null);
             }
+        }
+
+        // ---------- by period (week / month / year) ----------
+
+        private class PeriodRow
+        {
+            public DateTime Start { get; set; }
+            public DateTime End { get; set; }
+            public int Count { get; set; }
+            public decimal Total { get; set; }
+            public decimal? Change { get; set; }         // against the previous period
+            public decimal? ChangePercent { get; set; }  // null when there is no previous period or it had no sales
+        }
+
+        /// <summary>
+        /// Sales grouped into weeks, months or years, each compared with the period before it.
+        /// The range is widened to whole periods so the first and last rows are complete.
+        /// </summary>
+        public PeriodReportViewModel GetByPeriod(string granularity, string from, string to, int page)
+        {
+            string g = NormalizeGranularity(granularity);
+            DateTime start, end;
+            var rows = PeriodRows(g, from, to, out start, out end);
+
+            var table = BuildPeriodTable(g, start, end, rows, page);
+
+            decimal total = rows.Sum(r => r.Total);
+            var best = rows.OrderByDescending(r => r.Total).FirstOrDefault();
+            var latest = rows.LastOrDefault();
+
+            return new PeriodReportViewModel
+            {
+                Granularity = g,
+                From = start,
+                To = end,
+                TotalSales = total,
+                AveragePerPeriod = rows.Count == 0 ? 0m : Math.Round(total / rows.Count, 2),
+                BestPeriod = best == null || best.Total == 0 ? null : PeriodLabel(g, best),
+                BestPeriodSales = best == null ? 0m : best.Total,
+                LatestPeriod = latest == null ? null : PeriodLabel(g, latest),
+                LatestChangePercent = latest == null ? null : latest.ChangePercent,
+                Table = table,
+                // the chart covers every period, not only the table page
+                Chart = rows.Select(r => new ChartPoint { Label = PeriodChartLabel(g, r.Start), Value = r.Total }).ToList()
+            };
+        }
+
+        /// <summary>The whole period report (never paged) for the Excel / PDF exports.</summary>
+        public TableReport BuildPeriodTable(string granularity, string from, string to)
+        {
+            string g = NormalizeGranularity(granularity);
+            DateTime start, end;
+            var rows = PeriodRows(g, from, to, out start, out end);
+            return BuildPeriodTable(g, start, end, rows, null);
+        }
+
+        private TableReport BuildPeriodTable(string g, DateTime start, DateTime end, List<PeriodRow> rows, int? page)
+        {
+            var table = new TableReport
+            {
+                Title = LanguageHelper.T("Sales by Period", "المبيعات حسب الفترة"),
+                Subtitle = RangeText(start, end) + "  |  " + GranularityName(g),
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(LanguageHelper.T("Period", "الفترة")),
+                    new ExcelColumn(LanguageHelper.T("Invoices", "الفواتير")),
+                    new ExcelColumn(LanguageHelper.T("Total Sales", "إجمالي المبيعات"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Average Invoice", "متوسط الفاتورة"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Change", "التغيير"), ExcelExportHelper.MoneyFormat, signed: true),
+                    new ExcelColumn(LanguageHelper.T("Change %", "التغيير %"), ExcelExportHelper.MoneyFormat, signed: true)
+                }
+            };
+
+            // Paged in memory: growth needs the neighbouring rows, and a period list is short
+            // (the sales themselves are already summed per day in the database).
+            var pageRows = PageInMemory(rows, page, table);
+            table.Rows = pageRows.Select(r => new object[]
+            {
+                PeriodLabel(g, r),
+                r.Count,
+                r.Total,
+                r.Count == 0 ? 0m : Math.Round(r.Total / r.Count, 2),
+                r.Change,
+                r.ChangePercent
+            }).ToList();
+            return table;
+        }
+
+        // Every period between the (widened) range ends, including periods with no sales
+        private List<PeriodRow> PeriodRows(string g, string from, string to, out DateTime start, out DateTime end)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+            if (string.IsNullOrEmpty(from))
+                f = DefaultPeriodStart(g, t);
+
+            start = PeriodStart(g, f);
+            end = PeriodEnd(g, t);
+
+            var days = DateGroups(start, end).ToList();
+            var totals = days
+                .GroupBy(d => PeriodStart(g, d.Day.Value))
+                .ToDictionary(x => x.Key, x => new { Count = x.Sum(d => d.Count), Total = x.Sum(d => d.Total) });
+
+            var rows = new List<PeriodRow>();
+            for (var p = start; p <= end; p = NextPeriod(g, p))
+            {
+                var hit = totals.ContainsKey(p) ? totals[p] : null;
+                var row = new PeriodRow
+                {
+                    Start = p,
+                    End = PeriodEnd(g, p),
+                    Count = hit == null ? 0 : hit.Count,
+                    Total = hit == null ? 0m : hit.Total
+                };
+
+                if (rows.Count > 0)
+                {
+                    var previous = rows[rows.Count - 1].Total;
+                    row.Change = row.Total - previous;
+                    row.ChangePercent = previous == 0 ? (decimal?)null : Math.Round((row.Total - previous) * 100 / previous, 2);
+                }
+                rows.Add(row);
+            }
+            return rows;
+        }
+
+        private static string NormalizeGranularity(string granularity)
+        {
+            switch ((granularity ?? "").ToLowerInvariant())
+            {
+                case "week": return "week";
+                case "year": return "year";
+                default: return "month";
+            }
+        }
+
+        // When no start date is given: the last 12 weeks / 12 months / 5 years
+        private static DateTime DefaultPeriodStart(string g, DateTime to)
+        {
+            switch (g)
+            {
+                case "week": return to.AddDays(-7 * 11);
+                case "year": return new DateTime(to.Year, 1, 1).AddYears(-4);
+                default: return new DateTime(to.Year, to.Month, 1).AddMonths(-11);
+            }
+        }
+
+        // Weeks start on Sunday (Egypt)
+        private static DateTime PeriodStart(string g, DateTime d)
+        {
+            d = d.Date;
+            switch (g)
+            {
+                case "week": return d.AddDays(-(int)d.DayOfWeek);
+                case "year": return new DateTime(d.Year, 1, 1);
+                default: return new DateTime(d.Year, d.Month, 1);
+            }
+        }
+
+        private static DateTime NextPeriod(string g, DateTime start)
+        {
+            switch (g)
+            {
+                case "week": return start.AddDays(7);
+                case "year": return start.AddYears(1);
+                default: return start.AddMonths(1);
+            }
+        }
+
+        // Last day of the period that contains d
+        private static DateTime PeriodEnd(string g, DateTime d)
+        {
+            return NextPeriod(g, PeriodStart(g, d)).AddDays(-1);
+        }
+
+        private static string PeriodLabel(string g, PeriodRow r)
+        {
+            // LRM marks keep dates in left-to-right order inside RTL text
+            const string lrm = "\u200E";
+            switch (g)
+            {
+                case "week": return lrm + r.Start.ToString("yyyy-MM-dd") + lrm + " – " + lrm + r.End.ToString("yyyy-MM-dd") + lrm;
+                case "year": return r.Start.ToString("yyyy");
+                default: return r.Start.ToString("yyyy-MM");
+            }
+        }
+
+        private static string PeriodChartLabel(string g, DateTime start)
+        {
+            switch (g)
+            {
+                case "week": return start.ToString("MM/dd");
+                case "year": return start.ToString("yyyy");
+                default: return start.ToString("yyyy-MM");
+            }
+        }
+
+        private static string GranularityName(string g)
+        {
+            switch (g)
+            {
+                case "week": return LanguageHelper.T("Weekly", "أسبوعي");
+                case "year": return LanguageHelper.T("Yearly", "سنوي");
+                default: return LanguageHelper.T("Monthly", "شهري");
+            }
+        }
+
+        // Page of an in-memory list, with the same paging fields the database version sets
+        private static List<T> PageInMemory<T>(List<T> all, int? page, TableReport table)
+        {
+            table.TotalRecords = all.Count;
+
+            if (!page.HasValue)
+                return all;
+
+            int totalPages = Math.Max(1, (int)Math.Ceiling(all.Count / (double)PageSize));
+            int current = Math.Min(Math.Max(1, page.Value), totalPages);
+
+            table.PageSize = PageSize;
+            table.TotalPages = totalPages;
+            table.Page = current;
+
+            return all.Skip((current - 1) * PageSize).Take(PageSize).ToList();
         }
 
         // ---------- inventory / low stock ----------

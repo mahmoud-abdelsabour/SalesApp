@@ -24,10 +24,26 @@
                     {
                         var value = row[c];
                         string text;
+                        string cls = "";
                         if (value is DateTime) { text = ((DateTime)value).ToString("yyyy-MM-dd"); }
+                        else if (value is decimal && Model.Columns[c].Signed)
+                        {
+                            // change / growth: show + or - and color it
+                            var d = (decimal)value;
+                            text = (d > 0 ? "+" : "") + d.ToString("N2");
+                            cls = d > 0 ? "text-success" : (d < 0 ? "text-danger" : "text-muted");
+                        }
                         else if (value is decimal) { text = ((decimal)value).ToString("N2"); }
                         else { text = value == null ? "" : value.ToString(); }
-                        <td>@text</td>
+                        if (Model.Columns[c].Signed)
+                        {
+                            // keep the + / - sign in front of the number in right-to-left pages
+                            <td class="@cls"><span dir="ltr">@text</span></td>
+                        }
+                        else
+                        {
+                            <td class="@cls">@text</td>
+                        }
                     }
                 </tr>
             }

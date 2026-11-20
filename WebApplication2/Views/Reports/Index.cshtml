@@ -115,6 +115,30 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-4 mb-3">
+        <a class="card report-card" style="--accent-color:#0E9AA7;--accent-bg:#E1F4F6" href="@Url.Action("ByPeriod")">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-chart-line"></i></div>
+                <h6>@L("Sales by Period", "المبيعات حسب الفترة")</h6>
+                <div class="rc-desc">@L("Weekly, monthly and yearly sales with growth.", "المبيعات الأسبوعية والشهرية والسنوية مع النمو.")</div>
+                <div class="rc-stat">
+                    <small>@L("This month", "هذا الشهر")</small>
+                    <strong>@Model.ThisMonthSales.ToString("N2")</strong>
+                    @if (Model.MonthGrowthPercent.HasValue)
+                    {
+                        <span class="@(Model.MonthGrowthPercent > 0 ? "text-success" : (Model.MonthGrowthPercent < 0 ? "text-danger" : ""))">
+                            @(Model.MonthGrowthPercent > 0 ? "+" : "")@Model.MonthGrowthPercent.Value.ToString("N2")% @L("vs last month", "مقارنة بالشهر الماضي")
+                        </span>
+                    }
+                    else
+                    {
+                        <span>@L("no sales last month to compare", "لا مبيعات الشهر الماضي للمقارنة")</span>
+                    }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-xl-4 mb-3">
         <a class="card report-card" style="--accent-color:#2D9B6F;--accent-bg:#E6F5EE" href="@Url.Action("ByCustomer", new { from = from, to = to })">
             <div class="card-body">
                 <div class="rc-icon"><i class="fas fa-users"></i></div>

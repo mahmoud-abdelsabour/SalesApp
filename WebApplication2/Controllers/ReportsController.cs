@@ -24,6 +24,24 @@ namespace WebApplication2.Controllers
             return View("ReportPage", reports.GetByDate(from, to, page));
         }
 
+        // GET: Reports/ByPeriod?granularity=week|month|year&from=..&to=..&page=1
+        public ActionResult ByPeriod(string granularity = "month", string from = null, string to = null, int page = 1)
+        {
+            return View("PeriodReport", reports.GetByPeriod(granularity, from, to, page));
+        }
+
+        // GET: Reports/ExportPeriod  (Excel, all periods)
+        public ActionResult ExportPeriod(string granularity = "month", string from = null, string to = null)
+        {
+            return ExcelFile(reports.BuildPeriodTable(granularity, from, to), "Report_period");
+        }
+
+        // GET: Reports/ExportPeriodPdf  (printable, all periods; use the browser's "Save as PDF")
+        public ActionResult ExportPeriodPdf(string granularity = "month", string from = null, string to = null)
+        {
+            return PrintableReport(reports.BuildPeriodTable(granularity, from, to));
+        }
+
         // GET: Reports/ByCustomer?from=..&to=..&page=1
         public ActionResult ByCustomer(string from = null, string to = null, int page = 1)
         {

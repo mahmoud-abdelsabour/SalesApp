@@ -4,6 +4,13 @@
     Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
 }
 <form method="get" action="@Url.Action(Model.Action, "Reports")" id="rangeForm" class="range-bar">
+    @if (Model.Extra != null)
+    {
+        foreach (var item in Model.Extra)
+        {
+            <input type="hidden" name="@item.Key" value="@item.Value" />
+        }
+    }
     <div class="range-dates">
         <div class="range-field">
             <label for="fromDate">@L("From", "من")</label>
@@ -19,10 +26,20 @@
         </button>
     </div>
     <div class="range-chips">
-        <button type="button" class="chip quick-range" data-days="0">@L("Today", "اليوم")</button>
-        <button type="button" class="chip quick-range" data-days="6">@L("7 days", "٧ أيام")</button>
-        <button type="button" class="chip quick-range" data-days="29">@L("30 days", "٣٠ يوم")</button>
-        <button type="button" class="chip quick-range" data-month="1">@L("This month", "هذا الشهر")</button>
+        @if (Model.PeriodChips)
+        {
+            <button type="button" class="chip quick-range" data-months="6">@L("6 months", "٦ أشهر")</button>
+            <button type="button" class="chip quick-range" data-months="12">@L("12 months", "١٢ شهراً")</button>
+            <button type="button" class="chip quick-range" data-years="1">@L("This year", "هذه السنة")</button>
+            <button type="button" class="chip quick-range" data-years="5">@L("5 years", "٥ سنوات")</button>
+        }
+        else
+        {
+            <button type="button" class="chip quick-range" data-days="0">@L("Today", "اليوم")</button>
+            <button type="button" class="chip quick-range" data-days="6">@L("7 days", "٧ أيام")</button>
+            <button type="button" class="chip quick-range" data-days="29">@L("30 days", "٣٠ يوم")</button>
+            <button type="button" class="chip quick-range" data-month="1">@L("This month", "هذا الشهر")</button>
+        }
     </div>
 </form>
 <div class="range-note"><i class="fas fa-info-circle mr-1"></i>@L("Only confirmed invoices are counted; cancelled invoices are excluded.", "تُحتسب الفواتير المؤكدة فقط؛ الفواتير الملغاة مستبعدة.")</div>
@@ -52,6 +69,8 @@
             buttons[i].addEventListener('click', function () {
                 var today = new Date(), start = new Date();
                 if (this.getAttribute('data-month')) start = new Date(today.getFullYear(), today.getMonth(), 1);
+                else if (this.getAttribute('data-months')) start = new Date(today.getFullYear(), today.getMonth() - (parseInt(this.getAttribute('data-months'), 10) - 1), 1);
+                else if (this.getAttribute('data-years')) start = new Date(today.getFullYear() - (parseInt(this.getAttribute('data-years'), 10) - 1), 0, 1);
                 else start.setDate(today.getDate() - parseInt(this.getAttribute('data-days'), 10));
                 document.getElementById('fromDate').value = fmt(start);
                 document.getElementById('toDate').value = fmt(today);
