@@ -1,140 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web.Mvc;
-using WebApplication2.Filters;
-using WebApplication2.Helpers;
-using WebApplication2.Models.Data;
-using WebApplication2.Models.Entities;
+﻿using System.Web.Mvc;
 using WebApplication2.Models.ViewModels;
+using WebApplication2.Services;
 
 namespace WebApplication2.Controllers
 {
-    [CustomAuthorize]
-    public class ProductsController : Controller
+    public class ProductsController : AppController
     {
-        private AppDbContext db = new AppDbContext();
+        private readonly ProductService products;
 
-        private IEnumerable<System.Web.Mvc.SelectListItem> GetCategoryList(int? selectedId = null)
+        public ProductsController()
         {
-            return db.Categories
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.NameEn)
-                .ToList()
-                .Select(c => new System.Web.Mvc.SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.NameEn,
-                    Selected = selectedId.HasValue && c.Id == selectedId.Value
-                });
+            products = new ProductService(Db, new CategoryService(Db));
         }
 
         // GET: Products
         public ActionResult Index(int? categoryId, int page = 1)
         {
-            int pageSize = 15;
-
-            var query = db.Products.Where(p => p.IsActive);
-
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-
-            var projected = query
-                .Select(p => new ProductViewModel
-                {
-                    Id = p.Id,
-                    NameEn = p.NameEn,
-                    NameAr = p.NameAr,
-                    CategoryId = p.CategoryId,
-                    CategoryName = p.Category.NameEn,
-                    Price = p.Price,
-                    StockQuantity = p.StockQuantity,
-                    Description = p.Description,
-                    IsActive = p.IsActive,
-                    CreatedAt = p.CreatedAt
-                })
-                .OrderBy(p => p.NameEn);
-
-            int totalRecords = projected.Count();
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-
-            var products = projected
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = totalPages;
+            var paged = products.GetPage(categoryId, page);
+            SetPaging(paged, new { categoryId });
             ViewBag.CategoryId = categoryId;
-            ViewBag.Categories = GetCategoryList(categoryId);
-            ViewBag.RouteValues = new { categoryId };
-
-            return View(products);
+            ViewBag.Categories = products.GetCategoryList(categoryId);
+            return View(paged.Items);
         }
 
-        // Table of products (same category filter as Index) - shared by Excel and PDF
-        private TableReport BuildProductTable(int? categoryId)
-        {
-            var query = db.Products.Where(p => p.IsActive);
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-
-            var rows = query
-                .OrderBy(p => p.NameEn)
-                .Select(p => new
-                {
-                    p.NameEn,
-                    p.NameAr,
-                    Category = p.Category.NameEn,
-                    p.Price,
-                    p.StockQuantity,
-                    p.Description,
-                    p.CreatedAt
-                })
-                .ToList();
-
-            return new TableReport
-            {
-                Title = Resources.Labels.Products,
-                Columns = new List<ExcelColumn>
-                {
-                    new ExcelColumn(Resources.Labels.ProductNameEn),
-                    new ExcelColumn(Resources.Labels.ProductNameAr),
-                    new ExcelColumn(Resources.Labels.ProductCategory),
-                    new ExcelColumn(Resources.Labels.ProductPrice, ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(Resources.Labels.ProductStock),
-                    new ExcelColumn(Resources.Labels.ProductDescription),
-                    new ExcelColumn("Created", ExcelExportHelper.DateFormat)
-                },
-                Rows = rows.Select(r => new object[]
-                {
-                    r.NameEn, r.NameAr, r.Category, r.Price, r.StockQuantity, r.Description, r.CreatedAt
-                }).ToList()
-            };
-        }
-
-        // GET: Products/Export  (Excel)
+        // GET: Products/Export  (Excel, all rows)
         public ActionResult Export(int? categoryId)
         {
-            var t = BuildProductTable(categoryId);
-            var bytes = ExcelExportHelper.Build(t.Title, t.Columns, t.Rows);
-            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Products"));
+            return ExcelFile(products.BuildTable(categoryId), "Products");
         }
 
         // GET: Products/ExportPdf  (printable list; use the browser's "Save as PDF")
         public ActionResult ExportPdf(int? categoryId)
         {
-            return View("~/Views/Shared/ListReport.cshtml", BuildProductTable(categoryId));
+            return PrintableReport(products.BuildTable(categoryId));
         }
 
         // GET: Products/Create
         public ActionResult Create()
         {
-            var model = new ProductViewModel
-            {
-                Categories = GetCategoryList()
-            };
-            return View(model);
+            return View(products.NewForm());
         }
 
         // POST: Products/Create
@@ -144,60 +48,27 @@ namespace WebApplication2.Controllers
         {
             if (!ModelState.IsValid)
             {
-                model.Categories = GetCategoryList(model.CategoryId);
+                products.FillCategories(model);
                 return View(model);
             }
 
-            // Check name uniqueness within category
-            bool exists = db.Products.Any(p =>
-                p.NameEn.ToLower() == model.NameEn.ToLower() &&
-                p.CategoryId == model.CategoryId &&
-                p.IsActive);
-            if (exists)
+            var result = products.Create(model);
+            if (!result.Success)
             {
-                ModelState.AddModelError("NameEn", "A product with this name already exists in this category.");
-                model.Categories = GetCategoryList(model.CategoryId);
+                AddModelError(result);
+                products.FillCategories(model);
                 return View(model);
             }
 
-            var product = new Product
-            {
-                NameEn = model.NameEn,
-                NameAr = model.NameAr,
-                CategoryId = model.CategoryId,
-                Price = model.Price,
-                StockQuantity = model.StockQuantity,
-                Description = model.Description,
-                IsActive = true,
-                CreatedAt = DateTime.Now
-            };
-
-            db.Products.Add(product);
-            db.SaveChanges();
-
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // GET: Products/Edit/5
         public ActionResult Edit(int id)
         {
-            var product = db.Products.Find(id);
-            if (product == null || !product.IsActive)
+            var model = products.GetForEdit(id);
+            if (model == null)
                 return HttpNotFound();
-
-            var model = new ProductViewModel
-            {
-                Id = product.Id,
-                NameEn = product.NameEn,
-                NameAr = product.NameAr,
-                CategoryId = product.CategoryId,
-                Price = product.Price,
-                StockQuantity = product.StockQuantity,
-                Description = product.Description,
-                IsActive = product.IsActive,
-                Categories = GetCategoryList(product.CategoryId)
-            };
 
             return View(model);
         }
@@ -209,37 +80,21 @@ namespace WebApplication2.Controllers
         {
             if (!ModelState.IsValid)
             {
-                model.Categories = GetCategoryList(model.CategoryId);
+                products.FillCategories(model);
                 return View(model);
             }
 
-            // Check name uniqueness excluding self
-            bool exists = db.Products.Any(p =>
-                p.NameEn.ToLower() == model.NameEn.ToLower() &&
-                p.CategoryId == model.CategoryId &&
-                p.IsActive && p.Id != id);
-            if (exists)
-            {
-                ModelState.AddModelError("NameEn", "A product with this name already exists in this category.");
-                model.Categories = GetCategoryList(model.CategoryId);
-                return View(model);
-            }
-
-            var product = db.Products.Find(id);
-            if (product == null || !product.IsActive)
+            var result = products.Update(id, model);
+            if (result.IsNotFound)
                 return HttpNotFound();
+            if (!result.Success)
+            {
+                AddModelError(result);
+                products.FillCategories(model);
+                return View(model);
+            }
 
-            product.NameEn = model.NameEn;
-            product.NameAr = model.NameAr;
-            product.CategoryId = model.CategoryId;
-            product.Price = model.Price;
-            product.StockQuantity = model.StockQuantity;
-            product.Description = model.Description;
-
-            db.SaveChanges();
-
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // POST: Products/Delete/5
@@ -247,30 +102,7 @@ namespace WebApplication2.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult Delete(int id)
         {
-            var product = db.Products.Find(id);
-            if (product == null || !product.IsActive)
-                return Json(new { success = false, message = "Product not found." });
-
-            bool usedInInvoice = db.InvoiceItems.Any(i => i.ProductId == id);
-            if (usedInInvoice)
-            {
-                // Soft delete only
-                product.IsActive = false;
-                db.SaveChanges();
-                return Json(new { success = true, message = "Product deactivated (it has invoice history)." });
-            }
-
-            // Hard delete
-            db.Products.Remove(product);
-            db.SaveChanges();
-
-            return Json(new { success = true, message = Resources.Labels.DeleteSuccess });
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) db.Dispose();
-            base.Dispose(disposing);
+            return JsonOutcome(products.Delete(id));
         }
     }
 }

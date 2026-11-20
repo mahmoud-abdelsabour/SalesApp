@@ -1,114 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Web.Mvc;
-using WebApplication2.Filters;
-using WebApplication2.Helpers;
-using WebApplication2.Models.Data;
-using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
+using WebApplication2.Services;
 
 namespace WebApplication2.Controllers
 {
-    [CustomAuthorize]
-    public class CustomersController : Controller
+    public class CustomersController : AppController
     {
-        private AppDbContext db = new AppDbContext();
+        private readonly CustomerService customers;
+
+        public CustomersController()
+        {
+            customers = new CustomerService(Db);
+        }
 
         // GET: Customers
         public ActionResult Index(string search, int page = 1)
         {
-            int pageSize = 15;
-
-            var query = db.Customers.Where(c => c.IsActive);
-
-            if (!string.IsNullOrEmpty(search))
-                query = query.Where(c =>
-                    c.FullName.Contains(search) ||
-                    c.Phone.Contains(search));
-
-            var projected = query
-                .Select(c => new CustomerViewModel
-                {
-                    Id = c.Id,
-                    FullName = c.FullName,
-                    Phone = c.Phone,
-                    Email = c.Email,
-                    Address = c.Address,
-                    IsActive = c.IsActive,
-                    CreatedAt = c.CreatedAt,
-                    InvoiceCount = c.Invoices.Count()
-                })
-                .OrderBy(c => c.FullName);
-
-            int totalRecords = projected.Count();
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-
-            var customers = projected
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = totalPages;
+            var paged = customers.GetPage(search, page);
+            SetPaging(paged, new { search });
             ViewBag.Search = search;
-            ViewBag.RouteValues = new { search };
-
-            return View(customers);
+            return View(paged.Items);
         }
 
-        // Table of customers (same search as Index) - shared by Excel and PDF
-        private TableReport BuildCustomerTable(string search)
-        {
-            var query = db.Customers.Where(c => c.IsActive);
-            if (!string.IsNullOrEmpty(search))
-                query = query.Where(c => c.FullName.Contains(search) || c.Phone.Contains(search));
-
-            var rows = query
-                .OrderBy(c => c.FullName)
-                .Select(c => new
-                {
-                    c.FullName,
-                    c.Phone,
-                    c.Email,
-                    c.Address,
-                    InvoiceCount = c.Invoices.Count(),
-                    c.CreatedAt
-                })
-                .ToList();
-
-            return new TableReport
-            {
-                Title = Resources.Labels.Customers,
-                Subtitle = string.IsNullOrEmpty(search) ? null : Resources.Labels.Search + ": " + search,
-                Columns = new List<ExcelColumn>
-                {
-                    new ExcelColumn(Resources.Labels.CustomerFullName),
-                    new ExcelColumn(Resources.Labels.CustomerPhone),
-                    new ExcelColumn(Resources.Labels.CustomerEmail),
-                    new ExcelColumn(Resources.Labels.CustomerAddress),
-                    new ExcelColumn(Resources.Labels.Invoices),
-                    new ExcelColumn("Created", ExcelExportHelper.DateFormat)
-                },
-                Rows = rows.Select(r => new object[]
-                {
-                    r.FullName, r.Phone, r.Email, r.Address, r.InvoiceCount, r.CreatedAt
-                }).ToList()
-            };
-        }
-
-        // GET: Customers/Export  (Excel)
+        // GET: Customers/Export  (Excel, all rows)
         public ActionResult Export(string search)
         {
-            var t = BuildCustomerTable(search);
-            var bytes = ExcelExportHelper.Build(t.Title, t.Columns, t.Rows);
-            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Customers"));
+            return ExcelFile(customers.BuildTable(search), "Customers");
         }
 
         // GET: Customers/ExportPdf  (printable list; use the browser's "Save as PDF")
         public ActionResult ExportPdf(string search)
         {
-            return View("~/Views/Shared/ListReport.cshtml", BuildCustomerTable(search));
+            return PrintableReport(customers.BuildTable(search));
         }
 
         // GET: Customers/Create
@@ -125,48 +49,22 @@ namespace WebApplication2.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Check phone uniqueness
-            bool phoneExists = db.Customers.Any(c =>
-                c.Phone == model.Phone && c.IsActive);
-            if (phoneExists)
+            var result = customers.Create(model);
+            if (!result.Success)
             {
-                ModelState.AddModelError("Phone", Resources.Labels.PhoneDuplicate);
+                AddModelError(result);
                 return View(model);
             }
 
-            var customer = new Customer
-            {
-                FullName = model.FullName,
-                Phone = model.Phone,
-                Email = model.Email,
-                Address = model.Address,
-                IsActive = true,
-                CreatedAt = DateTime.Now
-            };
-
-            db.Customers.Add(customer);
-            db.SaveChanges();
-
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // GET: Customers/Edit/5
         public ActionResult Edit(int id)
         {
-            var customer = db.Customers.Find(id);
-            if (customer == null || !customer.IsActive)
+            var model = customers.Get(id);
+            if (model == null)
                 return HttpNotFound();
-
-            var model = new CustomerViewModel
-            {
-                Id = customer.Id,
-                FullName = customer.FullName,
-                Phone = customer.Phone,
-                Email = customer.Email,
-                Address = customer.Address,
-                IsActive = customer.IsActive
-            };
 
             return View(model);
         }
@@ -179,29 +77,16 @@ namespace WebApplication2.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Check phone uniqueness excluding self
-            bool phoneExists = db.Customers.Any(c =>
-                c.Phone == model.Phone &&
-                c.IsActive && c.Id != id);
-            if (phoneExists)
+            var result = customers.Update(id, model);
+            if (result.IsNotFound)
+                return HttpNotFound();
+            if (!result.Success)
             {
-                ModelState.AddModelError("Phone", Resources.Labels.PhoneDuplicate);
+                AddModelError(result);
                 return View(model);
             }
 
-            var customer = db.Customers.Find(id);
-            if (customer == null || !customer.IsActive)
-                return HttpNotFound();
-
-            customer.FullName = model.FullName;
-            customer.Phone = model.Phone;
-            customer.Email = model.Email;
-            customer.Address = model.Address;
-
-            db.SaveChanges();
-
-            TempData["Success"] = Resources.Labels.SaveSuccess;
-            return RedirectToAction("Index");
+            return RedirectWithSuccess();
         }
 
         // POST: Customers/Delete/5
@@ -209,45 +94,14 @@ namespace WebApplication2.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult Delete(int id)
         {
-            var customer = db.Customers.Find(id);
-            if (customer == null || !customer.IsActive)
-                return Json(new { success = false, message = "Customer not found." });
-
-            bool hasInvoices = db.Invoices.Any(i => i.CustomerId == id);
-            if (hasInvoices)
-            {
-                customer.IsActive = false;
-                db.SaveChanges();
-                return Json(new { success = true, message = "Customer deactivated (has invoice history)." });
-            }
-
-            db.Customers.Remove(customer);
-            db.SaveChanges();
-
-            return Json(new { success = true, message = Resources.Labels.DeleteSuccess });
+            return JsonOutcome(customers.Delete(id));
         }
 
-        // GET: Customers/Search?term=xxx (AJAX for invoice autocomplete)
+        // GET: Customers/Search?term=xxx (AJAX for the invoice customer picker)
         public JsonResult Search(string term)
         {
-            var customers = db.Customers
-                .Where(c => c.IsActive &&
-                    (c.FullName.Contains(term) || c.Phone.Contains(term)))
-                .Select(c => new
-                {
-                    id = c.Id,
-                    text = c.FullName + " - " + c.Phone
-                })
-                .Take(10)
-                .ToList();
-
-            return Json(customers, JsonRequestBehavior.AllowGet);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) db.Dispose();
-            base.Dispose(disposing);
+            var items = customers.Search(term).Select(c => new { id = c.Id, text = c.Text });
+            return Json(items, JsonRequestBehavior.AllowGet);
         }
     }
 }
