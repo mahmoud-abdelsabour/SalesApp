@@ -258,6 +258,8 @@
     <Content Include="Views\Invoices\Details.cshtml" />
     <Content Include="Views\Invoices\Print.cshtml" />
     <Content Include="Views\Reports\Index.cshtml" />
+    <Content Include="Views\Reports\ReportPage.cshtml" />
+    <Content Include="Views\Reports\_RangeFilter.cshtml" />
     <Content Include="Views\Reports\_ReportPager.cshtml" />
     <Content Include="Views\Reports\_ReportTable.cshtml" />
     <Content Include="Views\Shared\ListReport.cshtml" />

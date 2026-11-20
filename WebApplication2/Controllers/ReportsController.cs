@@ -29,21 +29,20 @@ namespace WebApplication2.Controllers
         private class CustomerRow { public string Name { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
         private class ProductRow { public string Name { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } }
 
-        // GET: Reports?from=2026-01-01&to=2026-01-31&dp=1&cp=1&pp=1
-        public ActionResult Index(string from = null, string to = null, int dp = 1, int cp = 1, int pp = 1)
+        // GET: Reports  (overview: summary cards + a card per report)
+        public ActionResult Index(string from = null, string to = null)
         {
             DateTime f, t;
             ParseRange(from, to, out f, out t);
 
-            // Summary cards cover the whole period
             var sales = Sales(f, t);
             int invoiceCount = sales.Count();
             decimal revenue = sales.Sum(i => (decimal?)i.TotalAmount) ?? 0m;
-            int itemsSold = SaleItems(f, t).Sum(x => (int?)x.Quantity) ?? 0;
 
-            var byDate = BuildDateTable(f, t, dp);
-            var byCustomer = BuildCustomerTable(f, t, cp);
-            var byProduct = BuildProductTable(f, t, pp);
+            var days = DateGroups(f, t).ToList();
+            var bestDay = days.OrderByDescending(r => r.Total).FirstOrDefault();
+            var topCustomer = CustomerGroups(f, t).FirstOrDefault();
+            var topProduct = ProductGroups(f, t).FirstOrDefault();
 
             var model = new ReportsViewModel
             {
@@ -52,24 +51,70 @@ namespace WebApplication2.Controllers
                 InvoiceCount = invoiceCount,
                 TotalRevenue = revenue,
                 AverageInvoice = invoiceCount == 0 ? 0m : Math.Round(revenue / invoiceCount, 2),
-                ItemsSold = itemsSold,
-                ByDate = byDate,
-                ByCustomer = byCustomer,
-                ByProduct = byProduct,
-                DatePage = byDate.Page,
-                CustomerPage = byCustomer.Page,
-                ProductPage = byProduct.Page,
-
-                // Charts: every day in the period, top 10 customers / products
-                DateChart = DateGroups(f, t).ToList()
-                    .Select(r => new ChartPoint { Label = r.Day.Value.ToString("MM/dd"), Value = r.Total }).ToList(),
-                CustomerChart = CustomerGroups(f, t).Take(10).ToList()
-                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Total }).ToList(),
-                ProductChart = ProductGroups(f, t).Take(10).ToList()
-                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Revenue }).ToList()
+                ItemsSold = SaleItems(f, t).Sum(x => (int?)x.Quantity) ?? 0,
+                BestDay = bestDay == null ? null : bestDay.Day.Value.ToString("yyyy-MM-dd"),
+                BestDayTotal = bestDay == null ? 0m : bestDay.Total,
+                TopCustomer = topCustomer == null ? null : topCustomer.Name,
+                TopCustomerTotal = topCustomer == null ? 0m : topCustomer.Total,
+                TopProduct = topProduct == null ? null : topProduct.Name,
+                TopProductRevenue = topProduct == null ? 0m : topProduct.Revenue,
+                DateChart = days.Select(r => new ChartPoint { Label = r.Day.Value.ToString("MM/dd"), Value = r.Total }).ToList()
             };
 
             return View(model);
+        }
+
+        // GET: Reports/ByDate?from=..&to=..&page=1
+        public ActionResult ByDate(string from = null, string to = null, int page = 1)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+
+            var model = new ReportPageViewModel
+            {
+                Action = "ByDate", Type = "date", Icon = "calendar-day", ChartKind = "line",
+                From = f, To = t,
+                Table = BuildDateTable(f, t, page),
+                // chart covers every day in the period, not only the table page
+                Chart = DateGroups(f, t).ToList()
+                    .Select(r => new ChartPoint { Label = r.Day.Value.ToString("MM/dd"), Value = r.Total }).ToList()
+            };
+            return View("ReportPage", model);
+        }
+
+        // GET: Reports/ByCustomer?from=..&to=..&page=1
+        public ActionResult ByCustomer(string from = null, string to = null, int page = 1)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+
+            var model = new ReportPageViewModel
+            {
+                Action = "ByCustomer", Type = "customer", Icon = "users", ChartKind = "bar",
+                From = f, To = t,
+                Table = BuildCustomerTable(f, t, page),
+                Chart = CustomerGroups(f, t).Take(10).ToList()
+                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Total }).ToList()
+            };
+            return View("ReportPage", model);
+        }
+
+        // GET: Reports/ByProduct?from=..&to=..&page=1
+        public ActionResult ByProduct(string from = null, string to = null, int page = 1)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+
+            var model = new ReportPageViewModel
+            {
+                Action = "ByProduct", Type = "product", Icon = "box", ChartKind = "bar",
+                Note = T("Revenue is before invoice-level discount.", "الإيراد قبل خصم الفاتورة."),
+                From = f, To = t,
+                Table = BuildProductTable(f, t, page),
+                Chart = ProductGroups(f, t).Take(10).ToList()
+                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Revenue }).ToList()
+            };
+            return View("ReportPage", model);
         }
 
         // GET: Reports/Export?type=date|customer|product&from=..&to=..   (Excel, all rows)

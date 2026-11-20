@@ -202,6 +202,61 @@
                 pointer-events: none;
             }
 
+        /* Reports sub-menu: a darker panel with pill-shaped items (no side stripe) */
+        .sidebar .submenu {
+            background: rgba(0,0,0,0.22);
+            margin: 2px 0 6px;
+            padding: 4px 0;
+        }
+
+        .sidebar .submenu .nav-link {
+            margin: 2px 10px;
+            padding: 8px 12px;
+            border: none !important;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.65) !important;
+        }
+
+            .sidebar .submenu .nav-link i {
+                width: 22px;
+                font-size: 0.8rem;
+                opacity: 0.8;
+            }
+
+            .sidebar .submenu .nav-link:hover {
+                background: rgba(255,255,255,0.07);
+                color: #fff !important;
+            }
+
+            .sidebar .submenu .nav-link.active {
+                background: rgba(0,180,216,0.22);
+                color: #fff !important;
+                font-weight: 600;
+            }
+
+                .sidebar .submenu .nav-link.active i {
+                    color: var(--accent);
+                    opacity: 1;
+                }
+
+        .sidebar.collapsed .submenu .nav-link {
+            margin: 2px 6px;
+            padding: 8px 0;
+            justify-content: center;
+        }
+
+        .sidebar .submenu-arrow {
+            margin-inline-start: auto;
+            width: auto !important;
+            font-size: 0.7rem !important;
+            transition: transform 0.2s;
+        }
+
+        .sidebar [aria-expanded="true"] .submenu-arrow {
+            transform: rotate(180deg);
+        }
+
         .sidebar-divider {
             border-top: 1px solid rgba(255,255,255,0.08);
             margin: 6px 12px;
@@ -602,12 +657,40 @@
                     <span class="link-text">@WebApplication2.Resources.Labels.Categories</span>
                 </a>
             </li>
+            @{
+                var isReports = ViewContext.RouteData.Values["controller"].ToString() == "Reports";
+                var reportAction = ViewContext.RouteData.Values["action"].ToString();
+                var rAr = WebApplication2.Helpers.LanguageHelper.IsArabic();
+            }
             <li class="nav-item">
-                <a class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "Reports" ? "active" : "")"
-                   href="/Reports/Index" title="@(WebApplication2.Helpers.LanguageHelper.IsArabic() ? "التقارير" : "Reports")">
+                <a class="nav-link @(isReports ? "active" : "")" data-toggle="collapse" href="#reportsMenu"
+                   role="button" aria-expanded="@(isReports ? "true" : "false")" title="@(rAr ? "التقارير" : "Reports")">
                     <i class="fas fa-chart-bar"></i>
-                    <span class="link-text">@(WebApplication2.Helpers.LanguageHelper.IsArabic() ? "التقارير" : "Reports")</span>
+                    <span class="link-text">@(rAr ? "التقارير" : "Reports")</span>
+                    <i class="fas fa-chevron-down submenu-arrow link-text"></i>
                 </a>
+                <ul class="list-unstyled submenu collapse @(isReports ? "show" : "")" id="reportsMenu">
+                    <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "Index" ? "active" : "")" href="/Reports/Index" title="@(rAr ? "نظرة عامة" : "Overview")">
+                            <i class="fas fa-th-large"></i><span class="link-text">@(rAr ? "نظرة عامة" : "Overview")</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "ByDate" ? "active" : "")" href="/Reports/ByDate" title="@(rAr ? "حسب التاريخ" : "Sales by Date")">
+                            <i class="fas fa-calendar-day"></i><span class="link-text">@(rAr ? "حسب التاريخ" : "Sales by Date")</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "ByCustomer" ? "active" : "")" href="/Reports/ByCustomer" title="@(rAr ? "حسب العميل" : "Sales by Customer")">
+                            <i class="fas fa-users"></i><span class="link-text">@(rAr ? "حسب العميل" : "Sales by Customer")</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "ByProduct" ? "active" : "")" href="/Reports/ByProduct" title="@(rAr ? "حسب المنتج" : "Sales by Product")">
+                            <i class="fas fa-box"></i><span class="link-text">@(rAr ? "حسب المنتج" : "Sales by Product")</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <div class="sidebar-divider"></div>
             <li class="nav-item">

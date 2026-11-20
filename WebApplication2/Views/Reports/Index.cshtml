@@ -6,191 +6,170 @@
     ViewBag.Title = L("Reports", "التقارير");
     var from = Model.From.ToString("yyyy-MM-dd");
     var to = Model.To.ToString("yyyy-MM-dd");
+    var none = "—";
 
-    // Chart data comes from the whole period (not just the visible table page)
-    var dateLabels = Model.DateChart.Select(p => p.Label).ToList();
-    var dateValues = Model.DateChart.Select(p => p.Value).ToList();
-    var custLabels = Model.CustomerChart.Select(p => p.Label).ToList();
-    var custValues = Model.CustomerChart.Select(p => p.Value).ToList();
-    var prodLabels = Model.ProductChart.Select(p => p.Label).ToList();
-    var prodValues = Model.ProductChart.Select(p => p.Value).ToList();
+    var labels = Model.DateChart.Select(p => p.Label).ToList();
+    var values = Model.DateChart.Select(p => p.Value).ToList();
 }
 
-<!-- Filter -->
-<div class="card mb-3">
-    <div class="card-header"><i class="fas fa-chart-bar mr-2"></i>@L("Sales Reports", "تقارير المبيعات")</div>
+<style>
+    .page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
+    .page-head h4 { margin: 0; font-weight: 700; color: var(--primary); }
+    .page-head p { margin: 2px 0 0; color: var(--text-muted); font-size: 0.88rem; }
+
+    .kpi { display: flex; align-items: center; gap: 14px; }
+    .kpi-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+    .kpi-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+    .kpi-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
+    .kpi-hero { background: linear-gradient(135deg, #0D1B2A 0%, #1B6CA8 100%); color: #fff; }
+    .kpi-hero .kpi-label { color: rgba(255,255,255,.7); }
+    .kpi-hero .kpi-icon { background: rgba(255,255,255,.16); color: #fff; }
+
+    .section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); margin: 6px 0 10px; }
+
+    .report-card { display: block; height: 100%; color: inherit; text-decoration: none !important; border-top: 4px solid var(--accent-color); transition: transform .2s, box-shadow .2s; }
+    .report-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,.12); color: inherit; }
+    .report-card .rc-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--accent-bg); color: var(--accent-color); font-size: 1.1rem; }
+    .report-card h6 { font-weight: 700; margin: 12px 0 2px; }
+    .report-card .rc-desc { font-size: 0.82rem; color: var(--text-muted); min-height: 36px; }
+    .report-card .rc-stat { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #F7F9FC; }
+    .report-card .rc-stat small { display: block; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: .4px; }
+    .report-card .rc-stat strong { display: block; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .report-card .rc-stat span { font-size: 0.82rem; color: var(--text-muted); }
+    .report-card .rc-open { margin-top: 14px; font-size: 0.85rem; font-weight: 600; color: var(--accent-color); }
+</style>
+
+<div class="page-head">
+    <div>
+        <h4><i class="fas fa-chart-bar mr-2"></i>@L("Sales Reports", "تقارير المبيعات")</h4>
+        <p>@L("Performance overview for the selected period.", "نظرة عامة على الأداء خلال الفترة المحددة.")</p>
+    </div>
+</div>
+
+<!-- Period -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        @Html.Partial("_RangeFilter", new WebApplication2.Models.ViewModels.ReportRangeModel { Action = "Index", From = Model.From, To = Model.To })
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row mb-2">
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card kpi-hero h-100"><div class="card-body kpi">
+            <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="kpi-label">@L("Total Sales", "إجمالي المبيعات")</div>
+                <div class="kpi-value">@Model.TotalRevenue.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#E8F1FA;color:#1B6CA8"><i class="fas fa-file-invoice"></i></div>
+            <div>
+                <div class="kpi-label">@L("Invoices", "الفواتير")</div>
+                <div class="kpi-value">@Model.InvoiceCount</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#E6F5EE;color:#2D9B6F"><i class="fas fa-receipt"></i></div>
+            <div>
+                <div class="kpi-label">@L("Average Invoice", "متوسط الفاتورة")</div>
+                <div class="kpi-value">@Model.AverageInvoice.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#FDF0E4;color:#F4A261"><i class="fas fa-cubes"></i></div>
+            <div>
+                <div class="kpi-label">@L("Items Sold", "الوحدات المباعة")</div>
+                <div class="kpi-value">@Model.ItemsSold</div>
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<!-- Trend -->
+<div class="card mb-4">
+    <div class="card-header"><i class="fas fa-chart-line mr-2"></i>@L("Sales trend", "اتجاه المبيعات")</div>
     <div class="card-body">
-        <form method="get" action="/Reports/Index" id="rangeForm" class="form-row align-items-end">
-            <div class="col-md-3 mb-2">
-                <label class="small mb-1">@L("From", "من")</label>
-                <input type="date" name="from" id="fromDate" value="@from" class="form-control form-control-sm" />
-            </div>
-            <div class="col-md-3 mb-2">
-                <label class="small mb-1">@L("To", "إلى")</label>
-                <input type="date" name="to" id="toDate" value="@to" class="form-control form-control-sm" />
-            </div>
-            <div class="col-md-6 mb-2">
-                <button type="submit" class="btn btn-sm btn-primary mr-1">
-                    <i class="fas fa-filter mr-1"></i>@L("Apply", "تطبيق")
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-days="0">@L("Today", "اليوم")</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-days="6">@L("7 days", "٧ أيام")</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-days="29">@L("30 days", "٣٠ يوم")</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary quick-range" data-month="1">@L("This month", "هذا الشهر")</button>
-            </div>
-        </form>
-        <small class="text-muted">@L("Only confirmed invoices are counted (cancelled invoices are excluded).", "تُحتسب الفواتير المؤكدة فقط (الفواتير الملغاة مستبعدة).")</small>
+        <div style="height:260px"><canvas id="trendChart"></canvas></div>
     </div>
 </div>
 
-<!-- Summary cards -->
-<div class="row mb-3">
-    <div class="col-6 col-lg-3 mb-2">
-        <div class="card h-100"><div class="card-body">
-            <div class="text-muted small">@L("Total Sales", "إجمالي المبيعات")</div>
-            <div class="h4 mb-0 text-primary">@Model.TotalRevenue.ToString("N2")</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3 mb-2">
-        <div class="card h-100"><div class="card-body">
-            <div class="text-muted small">@L("Invoices", "الفواتير")</div>
-            <div class="h4 mb-0">@Model.InvoiceCount</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3 mb-2">
-        <div class="card h-100"><div class="card-body">
-            <div class="text-muted small">@L("Average Invoice", "متوسط الفاتورة")</div>
-            <div class="h4 mb-0">@Model.AverageInvoice.ToString("N2")</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3 mb-2">
-        <div class="card h-100"><div class="card-body">
-            <div class="text-muted small">@L("Items Sold", "الوحدات المباعة")</div>
-            <div class="h4 mb-0">@Model.ItemsSold</div>
-        </div></div>
-    </div>
-</div>
-
-<!-- Tabs -->
-<div class="card">
-    <div class="card-header p-0 border-bottom-0">
-        <ul class="nav nav-tabs px-3 pt-2" id="reportTabs" role="tablist">
-            <li class="nav-item"><a class="nav-link active" id="tab-date-link" data-toggle="tab" href="#tab-date" role="tab">
-                <i class="fas fa-calendar-day mr-1"></i>@L("By Date", "حسب التاريخ")</a></li>
-            <li class="nav-item"><a class="nav-link" id="tab-customer-link" data-toggle="tab" href="#tab-customer" role="tab">
-                <i class="fas fa-users mr-1"></i>@L("By Customer", "حسب العميل")</a></li>
-            <li class="nav-item"><a class="nav-link" id="tab-product-link" data-toggle="tab" href="#tab-product" role="tab">
-                <i class="fas fa-box mr-1"></i>@L("By Product", "حسب المنتج")</a></li>
-        </ul>
-    </div>
-    <div class="card-body tab-content">
-
-        @* ---- By Date ---- *@
-        <div class="tab-pane fade show active" id="tab-date" role="tabpanel">
-            <div class="d-flex justify-content-end mb-2">
-                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = "date", from = from, to = to })">
-                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
-                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = "date", from = from, to = to })">
-                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+<!-- Reports -->
+<div class="section-title">@L("Explore reports", "استعرض التقارير")</div>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <a class="card report-card" style="--accent-color:#1B6CA8;--accent-bg:#E8F1FA" href="@Url.Action("ByDate", new { from = from, to = to })">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-calendar-day"></i></div>
+                <h6>@L("Sales by Date", "المبيعات حسب التاريخ")</h6>
+                <div class="rc-desc">@L("Daily totals, invoice counts and averages.", "الإجماليات اليومية وعدد الفواتير والمتوسط.")</div>
+                <div class="rc-stat">
+                    <small>@L("Best day", "أفضل يوم")</small>
+                    <strong>@(Model.BestDay ?? none)</strong>
+                    @if (Model.BestDay != null) { <span>@Model.BestDayTotal.ToString("N2")</span> }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
             </div>
-            <div style="height:280px" class="mb-3"><canvas id="chartDate"></canvas></div>
-            @Html.Partial("_ReportTable", Model.ByDate)
-            @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Param = "dp", TabHash = "#tab-date", Table = Model.ByDate, Report = Model })
-        </div>
-
-        @* ---- By Customer ---- *@
-        <div class="tab-pane fade" id="tab-customer" role="tabpanel">
-            <div class="d-flex justify-content-end mb-2">
-                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = "customer", from = from, to = to })">
-                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
-                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = "customer", from = from, to = to })">
-                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+        </a>
+    </div>
+    <div class="col-md-4 mb-3">
+        <a class="card report-card" style="--accent-color:#2D9B6F;--accent-bg:#E6F5EE" href="@Url.Action("ByCustomer", new { from = from, to = to })">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-users"></i></div>
+                <h6>@L("Sales by Customer", "المبيعات حسب العميل")</h6>
+                <div class="rc-desc">@L("Who buys the most, with each customer's share.", "من يشتري أكثر، مع نسبة كل عميل.")</div>
+                <div class="rc-stat">
+                    <small>@L("Top customer", "أفضل عميل")</small>
+                    <strong>@(Model.TopCustomer ?? none)</strong>
+                    @if (Model.TopCustomer != null) { <span>@Model.TopCustomerTotal.ToString("N2")</span> }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
             </div>
-            <div style="height:320px" class="mb-3"><canvas id="chartCustomer"></canvas></div>
-            @Html.Partial("_ReportTable", Model.ByCustomer)
-            @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Param = "cp", TabHash = "#tab-customer", Table = Model.ByCustomer, Report = Model })
-        </div>
-
-        @* ---- By Product ---- *@
-        <div class="tab-pane fade" id="tab-product" role="tabpanel">
-            <div class="d-flex justify-content-end mb-2">
-                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = "product", from = from, to = to })">
-                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
-                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = "product", from = from, to = to })">
-                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+        </a>
+    </div>
+    <div class="col-md-4 mb-3">
+        <a class="card report-card" style="--accent-color:#E08A3C;--accent-bg:#FDF0E4" href="@Url.Action("ByProduct", new { from = from, to = to })">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-box"></i></div>
+                <h6>@L("Sales by Product", "المبيعات حسب المنتج")</h6>
+                <div class="rc-desc">@L("Quantity sold and revenue per product.", "الكمية المباعة والإيراد لكل منتج.")</div>
+                <div class="rc-stat">
+                    <small>@L("Top product", "أفضل منتج")</small>
+                    <strong>@(Model.TopProduct ?? none)</strong>
+                    @if (Model.TopProduct != null) { <span>@Model.TopProductRevenue.ToString("N2")</span> }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
             </div>
-            <div style="height:320px" class="mb-2"><canvas id="chartProduct"></canvas></div>
-            <small class="text-muted d-block mb-3">@L("Revenue is before invoice-level discount.", "الإيراد قبل خصم الفاتورة.")</small>
-            @Html.Partial("_ReportTable", Model.ByProduct)
-            @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Param = "pp", TabHash = "#tab-product", Table = Model.ByProduct, Report = Model })
-        </div>
+        </a>
     </div>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script>
-        var colors = ['#1B6CA8', '#2D9B6F', '#F4A261', '#E63946', '#00B4D8', '#9B5DE5', '#6C757D', '#FFB703', '#8338EC', '#06D6A0'];
-        var salesLabel = '@L("Sales", "المبيعات")';
-        var noDataText = '@L("No data in this period", "لا توجد بيانات في هذه الفترة")';
+        var labels = @Html.Raw(Json.Encode(labels));
+        var values = @Html.Raw(Json.Encode(values));
 
-        function emptyOrChart(canvasId, labels, build) {
-            if (labels.length === 0) {
-                $('#' + canvasId).parent().html('<p class="text-center text-muted pt-5">' + noDataText + '</p>');
-                return;
-            }
-            build();
-        }
-
-        var dateLabels = @Html.Raw(Json.Encode(dateLabels));
-        var dateValues = @Html.Raw(Json.Encode(dateValues));
-        emptyOrChart('chartDate', dateLabels, function () {
-            new Chart(document.getElementById('chartDate'), {
-                type: 'line',
-                data: { labels: dateLabels, datasets: [{ label: salesLabel, data: dateValues, borderColor: '#1B6CA8',
-                    backgroundColor: 'rgba(27,108,168,0.1)', fill: true, tension: 0.3 }] },
+        if (labels.length === 0) {
+            $('#trendChart').parent().html('<p class="text-center text-muted pt-5">@L("No sales in this period", "لا توجد مبيعات في هذه الفترة")</p>');
+        } else {
+            // a line needs several points; with only a few days a bar chart reads better
+            var asBars = labels.length < 4;
+            new Chart(document.getElementById('trendChart'), {
+                type: asBars ? 'bar' : 'line',
+                data: { labels: labels, datasets: [{ label: '@L("Sales", "المبيعات")', data: values, borderColor: '#1B6CA8',
+                    backgroundColor: asBars ? '#1B6CA8' : 'rgba(27,108,168,0.12)', fill: true, tension: 0.3, pointRadius: 3,
+                    maxBarThickness: 60 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                     scales: { y: { beginAtZero: true } } }
             });
-        });
-
-        function barChart(canvasId, labels, values) {
-            emptyOrChart(canvasId, labels, function () {
-                new Chart(document.getElementById(canvasId), {
-                    type: 'bar',
-                    data: { labels: labels, datasets: [{ label: salesLabel, data: values, backgroundColor: colors }] },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
-                });
-            });
         }
-        barChart('chartCustomer', @Html.Raw(Json.Encode(custLabels)), @Html.Raw(Json.Encode(custValues)));
-        barChart('chartProduct', @Html.Raw(Json.Encode(prodLabels)), @Html.Raw(Json.Encode(prodValues)));
-
-        // Quick ranges
-        function fmt(d) {
-            var m = ('0' + (d.getMonth() + 1)).slice(-2), day = ('0' + d.getDate()).slice(-2);
-            return d.getFullYear() + '-' + m + '-' + day;
-        }
-        $('.quick-range').on('click', function () {
-            var today = new Date(), start = new Date();
-            if ($(this).data('month')) { start = new Date(today.getFullYear(), today.getMonth(), 1); }
-            else { start.setDate(today.getDate() - parseInt($(this).data('days'), 10)); }
-            $('#fromDate').val(fmt(start));
-            $('#toDate').val(fmt(today));
-            $('#rangeForm').submit();
-        });
-
-        // Remember the active tab across filter submits
-        $('#reportTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            history.replaceState(null, '', e.target.getAttribute('href'));
-        });
-        if (location.hash && $('#reportTabs a[href="' + location.hash + '"]').length) {
-            $('#reportTabs a[href="' + location.hash + '"]').tab('show');
-        }
-        $('#rangeForm').on('submit', function () {
-            var h = $('#reportTabs a.active').attr('href');
-            if (h) this.action = '/Reports/Index' + h;
-        });
     </script>
 }

@@ -1,0 +1,76 @@
+﻿@model WebApplication2.Models.ViewModels.ReportPageViewModel
+@{
+    var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
+    Func<string, string, string> L = (en, arText) => ar ? arText : en;
+
+    ViewBag.Title = Model.Table.Title;
+    var from = Model.From.ToString("yyyy-MM-dd");
+    var to = Model.To.ToString("yyyy-MM-dd");
+
+    var labels = Model.Chart.Select(p => p.Label).ToList();
+    var values = Model.Chart.Select(p => p.Value).ToList();
+    int chartHeight = Model.ChartKind == "line" ? 280 : 320;
+}
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <span><i class="fas fa-@Model.Icon mr-2"></i>@Model.Table.Title</span>
+        <a href="@Url.Action("Index", new { from = from, to = to })" class="btn btn-sm btn-light">
+            <i class="fas fa-th-large mr-1"></i>@L("Overview", "نظرة عامة")
+        </a>
+    </div>
+    <div class="card-body">
+        @Html.Partial("_RangeFilter", new WebApplication2.Models.ViewModels.ReportRangeModel { Action = Model.Action, From = Model.From, To = Model.To })
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+            <small class="text-muted">@Model.Note</small>
+            <div class="ml-auto">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("Export", new { type = Model.Type, from = from, to = to })">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportPdf", new { type = Model.Type, from = from, to = to })">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+        </div>
+
+        <div style="height:@(chartHeight)px" class="mb-3"><canvas id="reportChart"></canvas></div>
+
+        @Html.Partial("_ReportTable", Model.Table)
+        @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Action = Model.Action, From = Model.From, To = Model.To, Table = Model.Table })
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        var colors = ['#1B6CA8', '#2D9B6F', '#F4A261', '#E63946', '#00B4D8', '#9B5DE5', '#6C757D', '#FFB703', '#8338EC', '#06D6A0'];
+        var labels = @Html.Raw(Json.Encode(labels));
+        var values = @Html.Raw(Json.Encode(values));
+        var salesLabel = '@L("Sales", "المبيعات")';
+        var kind = '@Model.ChartKind';
+
+        if (labels.length === 0) {
+            $('#reportChart').parent().html('<p class="text-center text-muted pt-5">@L("No data in this period", "لا توجد بيانات في هذه الفترة")</p>');
+        } else if (kind === 'line') {
+            // a line needs several points; with only a few days a bar chart reads better
+            var asBars = labels.length < 4;
+            new Chart(document.getElementById('reportChart'), {
+                type: asBars ? 'bar' : 'line',
+                data: { labels: labels, datasets: [{ label: salesLabel, data: values, borderColor: '#1B6CA8',
+                    backgroundColor: asBars ? '#1B6CA8' : 'rgba(27,108,168,0.1)', fill: true, tension: 0.3, maxBarThickness: 60 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } } }
+            });
+        } else {
+            new Chart(document.getElementById('reportChart'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: salesLabel, data: values, backgroundColor: colors }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+            });
+        }
+    </script>
+}

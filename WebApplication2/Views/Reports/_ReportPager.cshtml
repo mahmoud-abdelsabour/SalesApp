@@ -1,22 +1,14 @@
 ﻿@model WebApplication2.Models.ViewModels.ReportPagerModel
 @{
     var table = Model.Table;
-    var r = Model.Report;
     var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
 
-    Func<int, string> link = p =>
+    Func<int, string> link = p => Url.Action(Model.Action, "Reports", new
     {
-        var rv = new System.Web.Routing.RouteValueDictionary
-        {
-            { "from", r.From.ToString("yyyy-MM-dd") },
-            { "to", r.To.ToString("yyyy-MM-dd") },
-            { "dp", r.DatePage },
-            { "cp", r.CustomerPage },
-            { "pp", r.ProductPage }
-        };
-        rv[Model.Param] = p;
-        return Url.Action("Index", "Reports", rv) + Model.TabHash;
-    };
+        from = Model.From.ToString("yyyy-MM-dd"),
+        to = Model.To.ToString("yyyy-MM-dd"),
+        page = p
+    });
 
     int first = (table.Page - 1) * table.PageSize + 1;
     int last = Math.Min(table.Page * table.PageSize, table.TotalRecords);

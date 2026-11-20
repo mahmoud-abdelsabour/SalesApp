@@ -1,0 +1,62 @@
+﻿@model WebApplication2.Models.ViewModels.ReportRangeModel
+@{
+    var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
+    Func<string, string, string> L = (en, arText) => ar ? arText : en;
+}
+<form method="get" action="@Url.Action(Model.Action, "Reports")" id="rangeForm" class="range-bar">
+    <div class="range-dates">
+        <div class="range-field">
+            <label for="fromDate">@L("From", "من")</label>
+            <input type="date" name="from" id="fromDate" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <i class="fas fa-arrow-@(ar ? "left" : "right") range-arrow"></i>
+        <div class="range-field">
+            <label for="toDate">@L("To", "إلى")</label>
+            <input type="date" name="to" id="toDate" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary range-apply">
+            <i class="fas fa-check mr-1"></i>@L("Apply", "تطبيق")
+        </button>
+    </div>
+    <div class="range-chips">
+        <button type="button" class="chip quick-range" data-days="0">@L("Today", "اليوم")</button>
+        <button type="button" class="chip quick-range" data-days="6">@L("7 days", "٧ أيام")</button>
+        <button type="button" class="chip quick-range" data-days="29">@L("30 days", "٣٠ يوم")</button>
+        <button type="button" class="chip quick-range" data-month="1">@L("This month", "هذا الشهر")</button>
+    </div>
+</form>
+<div class="range-note"><i class="fas fa-info-circle mr-1"></i>@L("Only confirmed invoices are counted; cancelled invoices are excluded.", "تُحتسب الفواتير المؤكدة فقط؛ الفواتير الملغاة مستبعدة.")</div>
+
+<style>
+    .range-bar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+    .range-dates { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+    .range-field label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin-bottom: 3px; }
+    .range-field input { min-width: 150px; }
+    .range-arrow { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 9px; }
+    .range-apply { margin-bottom: 1px; }
+    .range-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { border: 1px solid var(--border); background: #fff; color: var(--text-primary); border-radius: 999px; padding: 4px 14px; font-size: 0.8rem; cursor: pointer; transition: all .15s; }
+    .chip:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+    .range-note { margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); }
+</style>
+
+<script>
+    // Plain JS on purpose: jQuery is loaded at the end of the layout
+    (function () {
+        function fmt(d) {
+            var m = ('0' + (d.getMonth() + 1)).slice(-2), day = ('0' + d.getDate()).slice(-2);
+            return d.getFullYear() + '-' + m + '-' + day;
+        }
+        var buttons = document.querySelectorAll('.quick-range');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener('click', function () {
+                var today = new Date(), start = new Date();
+                if (this.getAttribute('data-month')) start = new Date(today.getFullYear(), today.getMonth(), 1);
+                else start.setDate(today.getDate() - parseInt(this.getAttribute('data-days'), 10));
+                document.getElementById('fromDate').value = fmt(start);
+                document.getElementById('toDate').value = fmt(today);
+                document.getElementById('rangeForm').submit();
+            });
+        }
+    })();
+</script>
