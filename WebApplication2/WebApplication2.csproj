@@ -191,8 +191,11 @@
     <Compile Include="Services\Common\ServiceResult.cs" />
     <Compile Include="Services\CategoryService.cs" />
     <Compile Include="Services\CustomerService.cs" />
+    <Compile Include="Services\DashboardService.cs" />
     <Compile Include="Services\InvoiceService.cs" />
     <Compile Include="Services\ProductService.cs" />
+    <Compile Include="Services\ReportService.cs" />
+    <Compile Include="Services\SalesQueries.cs" />
     <Compile Include="Services\SessionService.cs" />
     <Compile Include="Services\UserService.cs" />
     <Compile Include="Resources\Labels.Designer.cs">
