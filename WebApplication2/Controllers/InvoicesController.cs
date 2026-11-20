@@ -1,157 +1,56 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using WebApplication2.Filters;
 using WebApplication2.Helpers;
-using WebApplication2.Models.Data;
-using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
+using WebApplication2.Services;
 
 namespace WebApplication2.Controllers
 {
-    [CustomAuthorize]
-    public class InvoicesController : Controller
+    public class InvoicesController : AppController
     {
-        private AppDbContext db = new AppDbContext();
+        private readonly InvoiceService invoices;
+        private readonly CategoryService categories;
+        private readonly ProductService products;
+
+        public InvoicesController()
+        {
+            invoices = new InvoiceService(Db);
+            categories = new CategoryService(Db);
+            products = new ProductService(Db, categories);
+        }
 
         // GET: Invoices
         public ActionResult Index(int page = 1, string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
         {
-            int pageSize = 20;
+            var paged = invoices.GetPage(page, dateFrom, dateTo, customerId, status);
+            SetPaging(paged, new { dateFrom, dateTo, customerId, status });
 
-            var query = FilterInvoices(dateFrom, dateTo, customerId, status);
-
-            var projected = query
-                .Select(i => new InvoiceListViewModel
-                {
-                    Id = i.Id,
-                    InvoiceNumber = i.InvoiceNumber,
-                    CustomerName = i.Customer.FullName,
-                    InvoiceDate = i.InvoiceDate,
-                    TotalAmount = i.TotalAmount,
-                    Status = i.Status
-                })
-                .OrderByDescending(i => i.InvoiceDate);
-
-            int totalRecords = projected.Count();
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-
-            var invoices = projected
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = totalPages;
-            ViewBag.RouteValues = new { dateFrom, dateTo, customerId, status };
-
-            // Keep filter values for form
+            // Keep filter values for the form
             ViewBag.DateFrom = dateFrom;
             ViewBag.DateTo = dateTo;
             ViewBag.CustomerId = customerId;
             ViewBag.Status = status;
 
-            return View(invoices);
+            return View(paged.Items);
         }
 
-        // Shared by Index and Export so the Excel file matches what the list shows
-        private IQueryable<Invoice> FilterInvoices(string dateFrom, string dateTo, int? customerId, string status)
-        {
-            var query = db.Invoices.AsQueryable();
-
-            if (!string.IsNullOrEmpty(dateFrom))
-            {
-                DateTime from;
-                if (DateTime.TryParse(dateFrom, out from))
-                    query = query.Where(i => i.InvoiceDate >= from);
-            }
-
-            if (!string.IsNullOrEmpty(dateTo))
-            {
-                DateTime to;
-                if (DateTime.TryParse(dateTo, out to))
-                {
-                    DateTime toEndOfDay = to.Date.AddDays(1);
-                    query = query.Where(i => i.InvoiceDate < toEndOfDay);
-                }
-            }
-
-            if (customerId.HasValue)
-                query = query.Where(i => i.CustomerId == customerId.Value);
-
-            if (!string.IsNullOrEmpty(status))
-                query = query.Where(i => i.Status == status);
-
-            return query;
-        }
-
-        // Table of invoices (honours the same filters as Index) - shared by Excel and PDF
-        private TableReport BuildInvoiceTable(string dateFrom, string dateTo, int? customerId, string status)
-        {
-            var rows = FilterInvoices(dateFrom, dateTo, customerId, status)
-                .OrderByDescending(i => i.InvoiceDate)
-                .Select(i => new
-                {
-                    i.InvoiceNumber,
-                    Customer = i.Customer.FullName,
-                    i.InvoiceDate,
-                    i.SubTotal,
-                    i.InvoiceDiscountPct,
-                    i.InvoiceDiscountAmt,
-                    i.TotalAmount,
-                    i.Status,
-                    CreatedBy = i.CreatedByUser.FullName
-                })
-                .ToList();
-
-            var parts = new List<string>();
-            if (!string.IsNullOrEmpty(dateFrom)) parts.Add(Resources.Labels.FilterDateFrom + ": " + dateFrom);
-            if (!string.IsNullOrEmpty(dateTo)) parts.Add(Resources.Labels.FilterDateTo + ": " + dateTo);
-            if (!string.IsNullOrEmpty(status)) parts.Add(Resources.Labels.InvoiceStatus + ": " + status);
-
-            return new TableReport
-            {
-                Title = Resources.Labels.Invoices,
-                Subtitle = string.Join(" | ", parts),
-                Columns = new List<ExcelColumn>
-                {
-                    new ExcelColumn(Resources.Labels.InvoiceNumber),
-                    new ExcelColumn(Resources.Labels.InvoiceCustomer),
-                    new ExcelColumn(Resources.Labels.InvoiceDate, ExcelExportHelper.DateTimeFormat),
-                    new ExcelColumn(Resources.Labels.InvoiceSubTotal, ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(Resources.Labels.InvoiceDiscount + " %", ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(Resources.Labels.InvoiceDiscountAmt, ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(Resources.Labels.InvoiceTotal, ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(Resources.Labels.InvoiceStatus),
-                    new ExcelColumn("Created By")
-                },
-                Rows = rows.Select(r => new object[]
-                {
-                    r.InvoiceNumber, r.Customer, r.InvoiceDate, r.SubTotal, r.InvoiceDiscountPct,
-                    r.InvoiceDiscountAmt, r.TotalAmount, r.Status, r.CreatedBy
-                }).ToList()
-            };
-        }
-
-        // GET: Invoices/Export  (Excel list)
+        // GET: Invoices/Export  (Excel list, all rows)
         public ActionResult Export(string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
         {
-            var t = BuildInvoiceTable(dateFrom, dateTo, customerId, status);
-            var bytes = ExcelExportHelper.Build(t.Title, t.Columns, t.Rows);
-            return File(bytes, ExcelExportHelper.ContentType, ExcelExportHelper.FileName("Invoices"));
+            return ExcelFile(invoices.BuildTable(dateFrom, dateTo, customerId, status), "Invoices");
         }
 
         // GET: Invoices/ExportPdf  (printable list; use the browser's "Save as PDF")
         public ActionResult ExportPdf(string dateFrom = null, string dateTo = null, int? customerId = null, string status = null)
         {
-            return View("~/Views/Shared/ListReport.cshtml", BuildInvoiceTable(dateFrom, dateTo, customerId, status));
+            return PrintableReport(invoices.BuildTable(dateFrom, dateTo, customerId, status));
         }
 
         // GET: Invoices/ExportDetails/5  (Excel for a single invoice)
         public ActionResult ExportDetails(int id)
         {
-            var invoice = GetInvoiceDetails(id);
+            var invoice = invoices.GetDetails(id);
             if (invoice == null)
                 return HttpNotFound();
 
@@ -162,7 +61,7 @@ namespace WebApplication2.Controllers
         // GET: Invoices/Create
         public ActionResult Create()
         {
-            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
+            ViewBag.Categories = categories.GetActive();
             return View(new InvoiceCreateViewModel());
         }
 
@@ -171,199 +70,41 @@ namespace WebApplication2.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(InvoiceCreateViewModel model)
         {
-            // Null safety
             if (model == null)
                 model = new InvoiceCreateViewModel();
 
             if (model.Items == null)
                 model.Items = new List<InvoiceItemViewModel>();
 
-            // Re-populate categories for view in case of error
-            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
+            // Needed whenever the form is shown again
+            ViewBag.Categories = categories.GetActive();
 
-            // Validate customer
-            if (model.CustomerId == 0)
+            var validation = invoices.Validate(model);
+            if (!validation.Success)
             {
-                ModelState.AddModelError("", "Please select a customer.");
-                return View(model);
-            }
-
-            // Server-side validation
-            if (model.Items.Count == 0)
-            {
-                ModelState.AddModelError("", Resources.Labels.InvoiceNoItems);
-                return View(model);
-            }
-
-            foreach (var item in model.Items)
-            {
-                if (item.Quantity <= 0)
-                {
-                    ModelState.AddModelError("", Resources.Labels.InvoiceInvalidQty);
-                    return View(model);
-                }
-                if (item.DiscountPct < 0 || item.DiscountPct > 100)
-                {
-                    ModelState.AddModelError("", Resources.Labels.InvoiceInvalidDiscount);
-                    return View(model);
-                }
-            }
-
-            if (model.InvoiceDiscountPct < 0 || model.InvoiceDiscountPct > 100)
-            {
-                ModelState.AddModelError("", Resources.Labels.InvoiceInvalidDiscount);
+                AddModelError(validation);
                 return View(model);
             }
 
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Get logged in user id
-            var username = User.Identity.Name;
-            var user = db.Users.FirstOrDefault(u => u.Username == username);
-
-            using (var transaction = db.Database.BeginTransaction())
+            var result = invoices.Create(model, User.Identity.Name);
+            if (!result.Success)
             {
-                try
-                {
-                    // Build invoice header
-                    var invoice = new Invoice
-                    {
-                        InvoiceNumber = InvoiceNumberHelper.Generate(db),
-                        CustomerId = model.CustomerId,
-                        InvoiceDate = DateTime.Now,
-                        InvoiceDiscountPct = model.InvoiceDiscountPct,
-                        Notes = model.Notes,
-                        CreatedBy = user.Id,
-                        CreatedAt = DateTime.Now,
-                        Status = InvoiceStatus.Confirmed
-                    };
-
-                    // Calculate line items
-                    decimal subTotal = 0;
-                    var invoiceItems = new List<InvoiceItem>();
-
-                    // Total requested per product (the same product may appear on several lines)
-                    var requestedByProduct = model.Items
-                        .GroupBy(i => i.ProductId)
-                        .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
-
-                    foreach (var item in model.Items)
-                    {
-                        var product = db.Products.Find(item.ProductId);
-                        if (product == null || !product.IsActive)
-                        {
-                            ModelState.AddModelError("", "Product not found: " + item.ProductId);
-                            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
-                            return View(model);
-                        }
-
-                        // Stock validation
-                        if (item.Quantity <= 0)
-                        {
-                            ModelState.AddModelError("", Resources.Labels.InvoiceInvalidQty);
-                            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
-                            return View(model);
-                        }
-
-                        if (requestedByProduct[item.ProductId] > product.StockQuantity)
-                        {
-                            ModelState.AddModelError("", product.NameEn + ": " + Resources.Labels.InvoiceExceedsStock +
-                                " (Available: " + product.StockQuantity + ")");
-                            ViewBag.Categories = db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
-                            return View(model);
-                        }
-
-                        decimal discountAmt = product.Price * item.Quantity * item.DiscountPct / 100;
-                        decimal lineTotal = (product.Price * item.Quantity) - discountAmt;
-
-                        invoiceItems.Add(new InvoiceItem
-                        {
-                            ProductId = product.Id,
-                            ProductName = product.NameEn,
-                            UnitPrice = product.Price,
-                            Quantity = item.Quantity,
-                            DiscountPct = item.DiscountPct,
-                            DiscountAmt = discountAmt,
-                            LineTotal = lineTotal
-                        });
-
-                        subTotal += lineTotal;
-                    }
-
-                    // Invoice level discount
-                    decimal invoiceDiscountAmt = subTotal * model.InvoiceDiscountPct / 100;
-                    decimal totalAmount = subTotal - invoiceDiscountAmt;
-
-                    invoice.SubTotal = subTotal;
-                    invoice.InvoiceDiscountAmt = invoiceDiscountAmt;
-                    invoice.TotalAmount = totalAmount;
-
-                    db.Invoices.Add(invoice);
-
-                    // Unique index on InvoiceNumber guards against simultaneous saves;
-                    // on a collision, generate a fresh number and retry.
-                    const int maxAttempts = 5;
-                    for (int attempt = 1; ; attempt++)
-                    {
-                        try
-                        {
-                            db.SaveChanges();
-                            break;
-                        }
-                        catch (System.Data.Entity.Infrastructure.DbUpdateException ex)
-                            when (attempt < maxAttempts && IsDuplicateKey(ex))
-                        {
-                            invoice.InvoiceNumber = InvoiceNumberHelper.Generate(db);
-                        }
-                    }
-
-                    // Attach invoice id to items
-                    foreach (var item in invoiceItems)
-                        item.InvoiceId = invoice.Id;
-
-                    db.InvoiceItems.AddRange(invoiceItems);
-                    db.SaveChanges();
-
-                    // Deduct stock for each product
-                    foreach (var item in invoiceItems)
-                    {
-                        var product = db.Products.Find(item.ProductId);
-                        if (product != null)
-                        {
-                            product.StockQuantity -= item.Quantity;
-                            if (product.StockQuantity < 0) product.StockQuantity = 0;
-                        }
-                    }
-                    db.SaveChanges();
-
-                    transaction.Commit();
-
-                    TempData["Success"] = Resources.Labels.InvoiceSaved;
-                    // Details page prints the invoice automatically (print=true)
-                    return RedirectToAction("Details", new { id = invoice.Id, print = true });
-                }
-                catch (System.Data.Entity.Infrastructure.DbUpdateConcurrencyException)
-                {
-                    // Another invoice changed the same product's stock at the same time
-                    transaction.Rollback();
-                    ModelState.AddModelError("", "Stock was changed by another transaction. Please review quantities and try again.");
-                    return View(model);
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    ModelState.AddModelError("", "Error saving invoice: " + ex.Message);
-                    return View(model);
-                }
+                AddModelError(result);
+                return View(model);
             }
+
+            TempData["Success"] = Resources.Labels.InvoiceSaved;
+            // Details page prints the invoice automatically (print=true)
+            return RedirectToAction("Details", new { id = result.Value, print = true });
         }
 
         // GET: Invoices/Details/5
         public ActionResult Details(int id)
         {
-            var invoice = GetInvoiceDetails(id);
-
+            var invoice = invoices.GetDetails(id);
             if (invoice == null)
                 return HttpNotFound();
 
@@ -373,67 +114,20 @@ namespace WebApplication2.Controllers
         // GET: Invoices/Print/5  (standalone printable page; use the browser's "Save as PDF")
         public ActionResult Print(int id)
         {
-            var invoice = GetInvoiceDetails(id);
-
+            var invoice = invoices.GetDetails(id);
             if (invoice == null)
                 return HttpNotFound();
 
             return View(invoice);
         }
 
-        private InvoiceDetailsViewModel GetInvoiceDetails(int id)
-        {
-            return db.Invoices
-                .Where(i => i.Id == id)
-                .Select(i => new InvoiceDetailsViewModel
-                {
-                    Id = i.Id,
-                    InvoiceNumber = i.InvoiceNumber,
-                    CustomerName = i.Customer.FullName,
-                    CustomerPhone = i.Customer.Phone,
-                    CustomerEmail = i.Customer.Email,
-                    InvoiceDate = i.InvoiceDate,
-                    SubTotal = i.SubTotal,
-                    InvoiceDiscountPct = i.InvoiceDiscountPct,
-                    InvoiceDiscountAmt = i.InvoiceDiscountAmt,
-                    TotalAmount = i.TotalAmount,
-                    Notes = i.Notes,
-                    Status = i.Status,
-                    CreatedBy = i.CreatedByUser.FullName,
-                    Items = i.Items.Select(item => new InvoiceItemViewModel
-                    {
-                        ProductId = item.ProductId,
-                        ProductName = item.ProductName,
-                        UnitPrice = item.UnitPrice,
-                        Quantity = item.Quantity,
-                        DiscountPct = item.DiscountPct,
-                        DiscountAmt = item.DiscountAmt,
-                        LineTotal = item.LineTotal
-                    }).ToList()
-                })
-                .FirstOrDefault();
-        }
-
         // GET: Invoices/GetProducts?categoryId=1
         public JsonResult GetProducts(int? categoryId)
         {
-            var query = db.Products.Where(p => p.IsActive);
+            var items = products.GetActiveOptions(categoryId)
+                .Select(p => new { id = p.Id, text = p.Text, price = p.Price, stock = p.Stock });
 
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-
-            var products = query
-                .Select(p => new
-                {
-                    id = p.Id,
-                    text = p.NameEn,
-                    price = p.Price,
-                    stock = p.StockQuantity
-                })
-                .OrderBy(p => p.text)
-                .ToList();
-
-            return Json(products, JsonRequestBehavior.AllowGet);
+            return Json(items, JsonRequestBehavior.AllowGet);
         }
 
         // POST: Invoices/Cancel/5
@@ -441,60 +135,7 @@ namespace WebApplication2.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult Cancel(int id)
         {
-            var invoice = db.Invoices.Find(id);
-            if (invoice == null)
-                return Json(new { success = false, message = "Invoice not found." });
-
-            if (invoice.Status == InvoiceStatus.Cancelled)
-                return Json(new { success = false, message = "Invoice is already cancelled." });
-
-            using (var transaction = db.Database.BeginTransaction())
-            {
-                try
-                {
-                    // Return each item's quantity to stock
-                    var items = db.InvoiceItems.Where(i => i.InvoiceId == id).ToList();
-                    foreach (var item in items)
-                    {
-                        var product = db.Products.Find(item.ProductId);
-                        if (product != null)
-                            product.StockQuantity += item.Quantity;
-                    }
-
-                    invoice.Status = InvoiceStatus.Cancelled;
-                    db.SaveChanges();
-                    transaction.Commit();
-
-                    return Json(new { success = true, message = "Invoice cancelled successfully." });
-                }
-                catch (System.Data.Entity.Infrastructure.DbUpdateConcurrencyException)
-                {
-                    transaction.Rollback();
-                    return Json(new { success = false, message = "Stock was changed by another transaction. Please try again." });
-                }
-                catch (Exception)
-                {
-                    transaction.Rollback();
-                    return Json(new { success = false, message = "Error cancelling invoice." });
-                }
-            }
-        }
-
-        private static bool IsDuplicateKey(Exception ex)
-        {
-            for (var e = ex; e != null; e = e.InnerException)
-            {
-                var sql = e as System.Data.SqlClient.SqlException;
-                if (sql != null && (sql.Number == 2601 || sql.Number == 2627))
-                    return true;
-            }
-            return false;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) db.Dispose();
-            base.Dispose(disposing);
+            return JsonOutcome(invoices.Cancel(id));
         }
     }
 }

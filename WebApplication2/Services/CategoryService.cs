@@ -108,6 +108,12 @@ namespace WebApplication2.Services
             return ServiceResult.Ok(Resources.Labels.DeleteSuccess);
         }
 
+        /// <summary>Active categories by name (the invoice form's category picker).</summary>
+        public List<Category> GetActive()
+        {
+            return db.Categories.Where(c => c.IsActive).OrderBy(c => c.NameEn).ToList();
+        }
+
         /// <summary>Active categories for drop-downs, with one optionally pre-selected.</summary>
         public IEnumerable<SelectListItem> GetSelectList(int? selectedId = null)
         {

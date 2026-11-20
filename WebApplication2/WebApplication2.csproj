@@ -146,7 +146,6 @@
     <Compile Include="Helpers\EncryptionHelper.cs" />
     <Compile Include="Helpers\AuthCookieHelper.cs" />
     <Compile Include="Helpers\ExcelExportHelper.cs" />
-    <Compile Include="Helpers\InvoiceNumberHelper.cs" />
     <Compile Include="Helpers\LanguageHelper.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />
     <Compile Include="Migrations\202605051401527_InitialUser.cs" />
@@ -192,6 +191,7 @@
     <Compile Include="Services\Common\ServiceResult.cs" />
     <Compile Include="Services\CategoryService.cs" />
     <Compile Include="Services\CustomerService.cs" />
+    <Compile Include="Services\InvoiceService.cs" />
     <Compile Include="Services\ProductService.cs" />
     <Compile Include="Services\SessionService.cs" />
     <Compile Include="Resources\Labels.Designer.cs">

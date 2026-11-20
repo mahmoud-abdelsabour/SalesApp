@@ -10,6 +10,15 @@ using WebApplication2.Services.Common;
 
 namespace WebApplication2.Services
 {
+    /// <summary>A product as offered on the invoice form.</summary>
+    public class ProductOption
+    {
+        public int Id { get; set; }
+        public string Text { get; set; }
+        public decimal Price { get; set; }
+        public int Stock { get; set; }
+    }
+
     public class ProductService
     {
         private const int PageSize = 15;
@@ -49,6 +58,21 @@ namespace WebApplication2.Services
         public IEnumerable<SelectListItem> GetCategoryList(int? selectedId)
         {
             return categories.GetSelectList(selectedId);
+        }
+
+        /// <summary>Active products (optionally one category) with price and stock, for the invoice form.</summary>
+        public List<ProductOption> GetActiveOptions(int? categoryId)
+        {
+            return Active(categoryId)
+                .OrderBy(p => p.NameEn)
+                .Select(p => new ProductOption
+                {
+                    Id = p.Id,
+                    Text = p.NameEn,
+                    Price = p.Price,
+                    Stock = p.StockQuantity
+                })
+                .ToList();
         }
 
         /// <summary>Empty create form with its category drop-down.</summary>
