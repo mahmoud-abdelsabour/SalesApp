@@ -698,6 +698,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "ByCategory" ? "active" : "")" href="/Reports/ByCategory" title="@(rAr ? "حسب الفئة" : "Sales by Category")">
+                            <i class="fas fa-tags"></i><span class="link-text">@(rAr ? "حسب الفئة" : "Sales by Category")</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link @(isReports && reportAction == "Inventory" ? "active" : "")" href="/Reports/Inventory" title="@(rAr ? "المخزون" : "Inventory")">
                             <i class="fas fa-boxes"></i><span class="link-text">@(rAr ? "المخزون" : "Inventory")</span>
                         </a>

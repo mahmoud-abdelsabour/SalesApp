@@ -36,6 +36,12 @@ namespace WebApplication2.Controllers
             return View("ReportPage", reports.GetByProduct(from, to, page));
         }
 
+        // GET: Reports/ByCategory?from=..&to=..&page=1
+        public ActionResult ByCategory(string from = null, string to = null, int page = 1)
+        {
+            return View("ReportPage", reports.GetByCategory(from, to, page));
+        }
+
         // GET: Reports/Inventory?threshold=10&categoryId=..&lowOnly=true&page=1
         public ActionResult Inventory(int threshold = ReportService.DefaultLowStockThreshold, int? categoryId = null, bool lowOnly = false, int page = 1)
         {
@@ -54,7 +60,7 @@ namespace WebApplication2.Controllers
             return PrintableReport(reports.BuildInventoryTable(threshold, categoryId, lowOnly));
         }
 
-        // GET: Reports/Export?type=date|customer|product&from=..&to=..   (Excel, all rows)
+        // GET: Reports/Export?type=date|customer|product|category&from=..&to=..   (Excel, all rows)
         public ActionResult Export(string type = "date", string from = null, string to = null)
         {
             return ExcelFile(reports.BuildTable(type, from, to), "Report_" + (type ?? "date"));

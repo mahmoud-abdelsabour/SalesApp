@@ -24,6 +24,7 @@ namespace WebApplication2.Services
         // Row shapes for the grouped queries (so paging can run in the database)
         private class DateRow { public DateTime? Day { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
         private class CustomerRow { public string Name { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
+        private class CategoryRow { public string Name { get; set; } public int Invoices { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } }
         private class ProductRow { public string Name { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } }
         private class InventoryRow { public string Name { get; set; } public string Category { get; set; } public int Stock { get; set; } public decimal Price { get; set; } public decimal Value { get; set; } }
 
@@ -50,6 +51,7 @@ namespace WebApplication2.Services
             var bestDay = days.OrderByDescending(r => r.Total).FirstOrDefault();
             var topCustomer = CustomerGroups(f, t).FirstOrDefault();
             var topProduct = ProductGroups(f, t).FirstOrDefault();
+            var topCategory = CategoryGroups(f, t).FirstOrDefault();
 
             return new ReportsViewModel
             {
@@ -65,6 +67,8 @@ namespace WebApplication2.Services
                 TopCustomerTotal = topCustomer == null ? 0m : topCustomer.Total,
                 TopProduct = topProduct == null ? null : topProduct.Name,
                 TopProductRevenue = topProduct == null ? 0m : topProduct.Revenue,
+                TopCategory = topCategory == null ? null : topCategory.Name,
+                TopCategoryRevenue = topCategory == null ? 0m : topCategory.Revenue,
                 DateChart = DateChart(days),
                 LowStockThreshold = DefaultLowStockThreshold,
                 LowStockCount = db.Products.Count(p => p.IsActive && p.StockQuantity <= DefaultLowStockThreshold)
@@ -117,7 +121,23 @@ namespace WebApplication2.Services
             };
         }
 
-        /// <summary>A whole report (never paged) for the Excel / PDF exports. type: date | customer | product.</summary>
+        public ReportPageViewModel GetByCategory(string from, string to, int page)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+
+            return new ReportPageViewModel
+            {
+                Action = "ByCategory", Type = "category", Icon = "tags", ChartKind = "bar",
+                Note = LanguageHelper.T("Revenue is before invoice-level discount.", "الإيراد قبل خصم الفاتورة."),
+                From = f, To = t,
+                Table = BuildCategoryTable(f, t, page),
+                Chart = CategoryGroups(f, t).Take(10).ToList()
+                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Revenue }).ToList()
+            };
+        }
+
+        /// <summary>A whole report (never paged) for the Excel / PDF exports. type: date | customer | product | category.</summary>
         public TableReport BuildTable(string type, string from, string to)
         {
             DateTime f, t;
@@ -127,6 +147,7 @@ namespace WebApplication2.Services
             {
                 case "customer": return BuildCustomerTable(f, t, null);
                 case "product": return BuildProductTable(f, t, null);
+                case "category": return BuildCategoryTable(f, t, null);
                 default: return BuildDateTable(f, t, null);
             }
         }
@@ -308,6 +329,33 @@ namespace WebApplication2.Services
             return table;
         }
 
+        private TableReport BuildCategoryTable(DateTime f, DateTime t, int? page)
+        {
+            var table = new TableReport
+            {
+                Title = LanguageHelper.T("Sales by Category", "المبيعات حسب الفئة"),
+                Subtitle = RangeText(f, t) + "  |  " + LanguageHelper.T("Revenue is before invoice-level discount", "الإيراد قبل خصم الفاتورة"),
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(LanguageHelper.T("Category", "الفئة")),
+                    new ExcelColumn(LanguageHelper.T("Invoices", "الفواتير")),
+                    new ExcelColumn(LanguageHelper.T("Quantity Sold", "الكمية المباعة")),
+                    new ExcelColumn(LanguageHelper.T("Revenue", "الإيراد"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Share %", "النسبة %"), ExcelExportHelper.MoneyFormat)
+                }
+            };
+
+            // Share % is relative to the whole period, not just the visible page
+            decimal grand = db.ConfirmedItems(f, t).Sum(x => (decimal?)x.LineTotal) ?? 0m;
+
+            var rows = Fetch(CategoryGroups(f, t), page, table);
+            table.Rows = rows.Select(r => new object[]
+            {
+                r.Name, r.Invoices, r.Qty, r.Revenue, grand == 0 ? 0m : Math.Round(r.Revenue * 100 / grand, 2)
+            }).ToList();
+            return table;
+        }
+
         // ---------- grouped queries ----------
 
         private IQueryable<DateRow> DateGroups(DateTime f, DateTime t)
@@ -324,6 +372,20 @@ namespace WebApplication2.Services
                 .GroupBy(i => new { i.CustomerId, i.Customer.FullName })
                 .Select(g => new CustomerRow { Name = g.Key.FullName, Count = g.Count(), Total = g.Sum(i => i.TotalAmount) })
                 .OrderByDescending(r => r.Total).ThenBy(r => r.Name);
+        }
+
+        private IQueryable<CategoryRow> CategoryGroups(DateTime f, DateTime t)
+        {
+            return db.ConfirmedItems(f, t)
+                .GroupBy(x => new { x.Product.CategoryId, x.Product.Category.NameEn })
+                .Select(g => new CategoryRow
+                {
+                    Name = g.Key.NameEn,
+                    Invoices = g.Select(x => x.InvoiceId).Distinct().Count(),
+                    Qty = g.Sum(x => x.Quantity),
+                    Revenue = g.Sum(x => x.LineTotal)
+                })
+                .OrderByDescending(r => r.Revenue).ThenBy(r => r.Name);
         }
 
         private IQueryable<ProductRow> ProductGroups(DateTime f, DateTime t)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Web.Mvc;
 using System.Web.Routing;
@@ -30,6 +30,8 @@ namespace WebApplication2.Models.ViewModels
         public decimal TopCustomerTotal { get; set; }
         public string TopProduct { get; set; }
         public decimal TopProductRevenue { get; set; }
+        public string TopCategory { get; set; }
+        public decimal TopCategoryRevenue { get; set; }
 
         // Daily sales for the trend chart (whole period)
         public List<ChartPoint> DateChart { get; set; }
@@ -42,8 +44,8 @@ namespace WebApplication2.Models.ViewModels
     /// <summary>One report page (by date / customer / product) - a chart plus one page of the table.</summary>
     public class ReportPageViewModel
     {
-        public string Action { get; set; }      // ByDate | ByCustomer | ByProduct
-        public string Type { get; set; }        // date | customer | product (used by the exports)
+        public string Action { get; set; }      // ByDate | ByCustomer | ByProduct | ByCategory
+        public string Type { get; set; }        // date | customer | product | category (used by the exports)
         public string Icon { get; set; }        // Font Awesome icon name
         public string ChartKind { get; set; }   // line | bar
         public string Note { get; set; }

@@ -145,6 +145,21 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-4 mb-3">
+        <a class="card report-card" style="--accent-color:#9B5DE5;--accent-bg:#F1E8FC" href="@Url.Action("ByCategory", new { from = from, to = to })">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-tags"></i></div>
+                <h6>@L("Sales by Category", "المبيعات حسب الفئة")</h6>
+                <div class="rc-desc">@L("Revenue and share for each product category.", "الإيراد ونسبة كل فئة من المنتجات.")</div>
+                <div class="rc-stat">
+                    <small>@L("Top category", "أفضل فئة")</small>
+                    <strong>@(Model.TopCategory ?? none)</strong>
+                    @if (Model.TopCategory != null) { <span>@Model.TopCategoryRevenue.ToString("N2")</span> }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-xl-4 mb-3">
         <a class="card report-card" style="--accent-color:#E63946;--accent-bg:#FDE8EA" href="@Url.Action("Inventory")">
             <div class="card-body">
                 <div class="rc-icon"><i class="fas fa-boxes"></i></div>
