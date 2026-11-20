@@ -697,6 +697,11 @@
                             <i class="fas fa-box"></i><span class="link-text">@(rAr ? "حسب المنتج" : "Sales by Product")</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "Inventory" ? "active" : "")" href="/Reports/Inventory" title="@(rAr ? "المخزون" : "Inventory")">
+                            <i class="fas fa-boxes"></i><span class="link-text">@(rAr ? "المخزون" : "Inventory")</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
             <div class="sidebar-divider"></div>

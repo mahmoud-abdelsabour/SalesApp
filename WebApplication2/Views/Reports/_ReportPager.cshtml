@@ -3,12 +3,18 @@
     var table = Model.Table;
     var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
 
-    Func<int, string> link = p => Url.Action(Model.Action, "Reports", new
+    Func<int, string> link = p =>
     {
-        from = Model.From.ToString("yyyy-MM-dd"),
-        to = Model.To.ToString("yyyy-MM-dd"),
-        page = p
-    });
+        var route = Model.Route != null
+            ? new System.Web.Routing.RouteValueDictionary(Model.Route)
+            : new System.Web.Routing.RouteValueDictionary
+            {
+                { "from", Model.From.ToString("yyyy-MM-dd") },
+                { "to", Model.To.ToString("yyyy-MM-dd") }
+            };
+        route["page"] = p;
+        return Url.Action(Model.Action, "Reports", route);
+    };
 
     int first = (table.Page - 1) * table.PageSize + 1;
     int last = Math.Min(table.Page * table.PageSize, table.TotalRecords);

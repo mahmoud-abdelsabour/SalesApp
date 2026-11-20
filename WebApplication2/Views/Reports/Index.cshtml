@@ -12,18 +12,13 @@
     var values = Model.DateChart.Select(p => p.Value).ToList();
 }
 
+@Html.Partial("_KpiStyles")
+
 <style>
     .page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
     .page-head h4 { margin: 0; font-weight: 700; color: var(--primary); }
     .page-head p { margin: 2px 0 0; color: var(--text-muted); font-size: 0.88rem; }
 
-    .kpi { display: flex; align-items: center; gap: 14px; }
-    .kpi-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
-    .kpi-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
-    .kpi-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
-    .kpi-hero { background: linear-gradient(135deg, #0D1B2A 0%, #1B6CA8 100%); color: #fff; }
-    .kpi-hero .kpi-label { color: rgba(255,255,255,.7); }
-    .kpi-hero .kpi-icon { background: rgba(255,255,255,.16); color: #fff; }
 
     .section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); margin: 6px 0 10px; }
 
@@ -104,7 +99,7 @@
 <!-- Reports -->
 <div class="section-title">@L("Explore reports", "استعرض التقارير")</div>
 <div class="row">
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 col-xl-4 mb-3">
         <a class="card report-card" style="--accent-color:#1B6CA8;--accent-bg:#E8F1FA" href="@Url.Action("ByDate", new { from = from, to = to })">
             <div class="card-body">
                 <div class="rc-icon"><i class="fas fa-calendar-day"></i></div>
@@ -119,7 +114,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 col-xl-4 mb-3">
         <a class="card report-card" style="--accent-color:#2D9B6F;--accent-bg:#E6F5EE" href="@Url.Action("ByCustomer", new { from = from, to = to })">
             <div class="card-body">
                 <div class="rc-icon"><i class="fas fa-users"></i></div>
@@ -134,7 +129,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 col-xl-4 mb-3">
         <a class="card report-card" style="--accent-color:#E08A3C;--accent-bg:#FDF0E4" href="@Url.Action("ByProduct", new { from = from, to = to })">
             <div class="card-body">
                 <div class="rc-icon"><i class="fas fa-box"></i></div>
@@ -144,6 +139,21 @@
                     <small>@L("Top product", "أفضل منتج")</small>
                     <strong>@(Model.TopProduct ?? none)</strong>
                     @if (Model.TopProduct != null) { <span>@Model.TopProductRevenue.ToString("N2")</span> }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-xl-4 mb-3">
+        <a class="card report-card" style="--accent-color:#E63946;--accent-bg:#FDE8EA" href="@Url.Action("Inventory")">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-boxes"></i></div>
+                <h6>@L("Inventory & Low Stock", "المخزون والمخزون المنخفض")</h6>
+                <div class="rc-desc">@L("Stock levels, stock value and products running out.", "مستويات المخزون وقيمته والمنتجات التي توشك على النفاد.")</div>
+                <div class="rc-stat">
+                    <small>@L("Low stock items", "منتجات بمخزون منخفض")</small>
+                    <strong>@Model.LowStockCount</strong>
+                    <span>@L("at " + Model.LowStockThreshold + " units or fewer", "عند " + Model.LowStockThreshold + " وحدة أو أقل")</span>
                 </div>
                 <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
             </div>

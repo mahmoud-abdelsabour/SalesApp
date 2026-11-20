@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using WebApplication2.Helpers;
 using WebApplication2.Models.Data;
+using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
 
 namespace WebApplication2.Services
@@ -17,10 +18,14 @@ namespace WebApplication2.Services
     {
         private const int PageSize = 15;
 
+        /// <summary>Products with this much stock or less count as "low stock" unless the user picks another level.</summary>
+        public const int DefaultLowStockThreshold = 10;
+
         // Row shapes for the grouped queries (so paging can run in the database)
         private class DateRow { public DateTime? Day { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
         private class CustomerRow { public string Name { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
         private class ProductRow { public string Name { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } }
+        private class InventoryRow { public string Name { get; set; } public string Category { get; set; } public int Stock { get; set; } public decimal Price { get; set; } public decimal Value { get; set; } }
 
         private readonly AppDbContext db;
 
@@ -60,7 +65,9 @@ namespace WebApplication2.Services
                 TopCustomerTotal = topCustomer == null ? 0m : topCustomer.Total,
                 TopProduct = topProduct == null ? null : topProduct.Name,
                 TopProductRevenue = topProduct == null ? 0m : topProduct.Revenue,
-                DateChart = DateChart(days)
+                DateChart = DateChart(days),
+                LowStockThreshold = DefaultLowStockThreshold,
+                LowStockCount = db.Products.Count(p => p.IsActive && p.StockQuantity <= DefaultLowStockThreshold)
             };
         }
 
@@ -122,6 +129,107 @@ namespace WebApplication2.Services
                 case "product": return BuildProductTable(f, t, null);
                 default: return BuildDateTable(f, t, null);
             }
+        }
+
+        // ---------- inventory / low stock ----------
+
+        /// <summary>
+        /// Stock levels of active products: summary cards for the chosen category, the lowest-stock chart,
+        /// and one page of the table (optionally only products at or below the threshold).
+        /// </summary>
+        public InventoryReportViewModel GetInventory(int threshold, int? categoryId, bool lowOnly, int page)
+        {
+            threshold = Math.Max(0, threshold);
+            var scope = InventoryScope(categoryId);
+
+            return new InventoryReportViewModel
+            {
+                Threshold = threshold,
+                CategoryId = categoryId,
+                LowOnly = lowOnly,
+                Categories = new CategoryService(db).GetSelectList(categoryId),
+                TotalProducts = scope.Count(),
+                LowStockCount = scope.Count(p => p.StockQuantity <= threshold),
+                OutOfStockCount = scope.Count(p => p.StockQuantity == 0),
+                StockValue = scope.Sum(p => (decimal?)(p.Price * p.StockQuantity)) ?? 0m,
+                Table = BuildInventoryTable(threshold, categoryId, lowOnly, page),
+                // the products closest to running out (within the current filter)
+                Chart = InventoryRows(threshold, categoryId, lowOnly).Take(10).ToList()
+                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Stock }).ToList()
+            };
+        }
+
+        /// <summary>The whole inventory report (never paged) for the Excel / PDF exports.</summary>
+        public TableReport BuildInventoryTable(int threshold, int? categoryId, bool lowOnly)
+        {
+            return BuildInventoryTable(Math.Max(0, threshold), categoryId, lowOnly, null);
+        }
+
+        private TableReport BuildInventoryTable(int threshold, int? categoryId, bool lowOnly, int? page)
+        {
+            var subtitle = LanguageHelper.T("Low stock level", "حد انخفاض المخزون") + ": " + threshold;
+            if (lowOnly)
+                subtitle += "  |  " + LanguageHelper.T("Low stock only", "المخزون المنخفض فقط");
+
+            var table = new TableReport
+            {
+                Title = LanguageHelper.T("Inventory & Low Stock", "المخزون والمخزون المنخفض"),
+                Subtitle = subtitle,
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(LanguageHelper.T("Product", "المنتج")),
+                    new ExcelColumn(LanguageHelper.T("Category", "الفئة")),
+                    new ExcelColumn(LanguageHelper.T("In Stock", "المخزون")),
+                    new ExcelColumn(LanguageHelper.T("Unit Price", "سعر الوحدة"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Stock Value", "قيمة المخزون"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Status", "الحالة"))
+                }
+            };
+
+            var rows = Fetch(InventoryRows(threshold, categoryId, lowOnly), page, table);
+            table.Rows = rows.Select(r => new object[]
+            {
+                r.Name, r.Category, r.Stock, r.Price, r.Value, StockStatus(r.Stock, threshold)
+            }).ToList();
+            return table;
+        }
+
+        // Active products, optionally in one category
+        private IQueryable<Product> InventoryScope(int? categoryId)
+        {
+            var query = db.Products.Where(p => p.IsActive);
+
+            if (categoryId.HasValue)
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+
+            return query;
+        }
+
+        // Lowest stock first, then by name
+        private IQueryable<InventoryRow> InventoryRows(int threshold, int? categoryId, bool lowOnly)
+        {
+            var query = InventoryScope(categoryId);
+
+            if (lowOnly)
+                query = query.Where(p => p.StockQuantity <= threshold);
+
+            return query
+                .Select(p => new InventoryRow
+                {
+                    Name = p.NameEn,
+                    Category = p.Category.NameEn,
+                    Stock = p.StockQuantity,
+                    Price = p.Price,
+                    Value = p.Price * p.StockQuantity
+                })
+                .OrderBy(r => r.Stock).ThenBy(r => r.Name);
+        }
+
+        private static string StockStatus(int stock, int threshold)
+        {
+            if (stock == 0) return LanguageHelper.T("Out of stock", "نفد المخزون");
+            if (stock <= threshold) return LanguageHelper.T("Low", "منخفض");
+            return LanguageHelper.T("OK", "جيد");
         }
 
         // ---------- tables ----------

@@ -270,7 +270,9 @@
     <Content Include="Views\Invoices\Index.cshtml" />
     <Content Include="Views\Invoices\Details.cshtml" />
     <Content Include="Views\Invoices\Print.cshtml" />
+    <Content Include="Views\Reports\InventoryReport.cshtml" />
     <Content Include="Views\Reports\Index.cshtml" />
+    <Content Include="Views\Reports\_KpiStyles.cshtml" />
     <Content Include="Views\Reports\ReportPage.cshtml" />
     <Content Include="Views\Reports\_RangeFilter.cshtml" />
     <Content Include="Views\Reports\_ReportPager.cshtml" />

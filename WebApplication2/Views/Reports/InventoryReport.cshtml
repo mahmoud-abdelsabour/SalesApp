@@ -1,0 +1,134 @@
+﻿@model WebApplication2.Models.ViewModels.InventoryReportViewModel
+@{
+    var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
+    Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
+
+    ViewBag.Title = Model.Table.Title;
+
+    var labels = Model.Chart.Select(p => p.Label).ToList();
+    var values = Model.Chart.Select(p => p.Value).ToList();
+
+    // Filters carried by the pager and the export buttons
+    var filters = new System.Web.Routing.RouteValueDictionary
+    {
+        { "threshold", Model.Threshold },
+        { "categoryId", Model.CategoryId },
+        { "lowOnly", Model.LowOnly }
+    };
+}
+
+@Html.Partial("_KpiStyles")
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <span><i class="fas fa-boxes mr-2"></i>@Model.Table.Title</span>
+        <a href="@Url.Action("Index")" class="btn btn-sm btn-light">
+            <i class="fas fa-th-large mr-1"></i>@L("Overview", "نظرة عامة")
+        </a>
+    </div>
+    <div class="card-body">
+        <form method="get" action="@Url.Action("Inventory")" class="form-row align-items-end">
+            <div class="col-md-4 mb-2">
+                <label class="small text-muted mb-1">@L("Category", "الفئة")</label>
+                @Html.DropDownList("categoryId", Model.Categories, L("All categories", "كل الفئات"), new { @class = "form-control form-control-sm", style = "height:auto;line-height:1.5" })
+            </div>
+            <div class="col-md-3 mb-2">
+                <label class="small text-muted mb-1">@L("Low stock level (units or fewer)", "حد المخزون المنخفض (وحدة أو أقل)")</label>
+                <input type="number" min="0" name="threshold" value="@Model.Threshold" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="lowOnly" name="lowOnly" value="true" @(Model.LowOnly ? "checked" : "") />
+                    <label class="custom-control-label" for="lowOnly">@L("Low stock only", "المخزون المنخفض فقط")</label>
+                </div>
+            </div>
+            <div class="col-md-2 mb-2">
+                <button type="submit" class="btn btn-sm btn-primary btn-block">
+                    <i class="fas fa-check mr-1"></i>@L("Apply", "تطبيق")
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row mb-2">
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card kpi-hero h-100"><div class="card-body kpi">
+            <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="kpi-label">@L("Stock Value", "قيمة المخزون")</div>
+                <div class="kpi-value">@Model.StockValue.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#E8F1FA;color:#1B6CA8"><i class="fas fa-box"></i></div>
+            <div>
+                <div class="kpi-label">@L("Products", "المنتجات")</div>
+                <div class="kpi-value">@Model.TotalProducts</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#FDF0E4;color:#E08A3C"><i class="fas fa-exclamation-triangle"></i></div>
+            <div>
+                <div class="kpi-label">@L("Low Stock", "مخزون منخفض")</div>
+                <div class="kpi-value">@Model.LowStockCount</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#FDE8EA;color:#E63946"><i class="fas fa-ban"></i></div>
+            <div>
+                <div class="kpi-label">@L("Out of Stock", "نفد المخزون")</div>
+                <div class="kpi-value">@Model.OutOfStockCount</div>
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+            <small class="text-muted">@Model.Table.Subtitle</small>
+            <div class="ml-auto">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("ExportInventory", filters)">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportInventoryPdf", filters)">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+        </div>
+
+        <div class="section-note small text-muted mb-1">@L("Lowest stock first", "الأقل مخزوناً أولاً")</div>
+        <div style="height:300px" class="mb-3"><canvas id="stockChart"></canvas></div>
+
+        @Html.Partial("_ReportTable", Model.Table)
+        @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Action = "Inventory", Table = Model.Table, Route = filters })
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        var labels = @Html.Raw(Json.Encode(labels));
+        var values = @Html.Raw(Json.Encode(values));
+        var threshold = @Model.Threshold;
+
+        if (labels.length === 0) {
+            $('#stockChart').parent().html('<p class="text-center text-muted pt-5">@L("No products match", "لا توجد منتجات مطابقة")</p>');
+        } else {
+            // red = out of stock, orange = low, green = ok
+            var colors = values.map(function (v) { return v === 0 ? '#E63946' : (v <= threshold ? '#F4A261' : '#2D9B6F'); });
+            new Chart(document.getElementById('stockChart'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: '@L("In Stock", "المخزون")', data: values, backgroundColor: colors }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+            });
+        }
+    </script>
+}

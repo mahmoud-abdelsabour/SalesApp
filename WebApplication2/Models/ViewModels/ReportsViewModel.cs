@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Web.Mvc;
+using System.Web.Routing;
 
 namespace WebApplication2.Models.ViewModels
 {
@@ -31,6 +33,10 @@ namespace WebApplication2.Models.ViewModels
 
         // Daily sales for the trend chart (whole period)
         public List<ChartPoint> DateChart { get; set; }
+
+        // Inventory headline: active products at or below the default low-stock threshold
+        public int LowStockCount { get; set; }
+        public int LowStockThreshold { get; set; }
     }
 
     /// <summary>One report page (by date / customer / product) - a chart plus one page of the table.</summary>
@@ -57,11 +63,32 @@ namespace WebApplication2.Models.ViewModels
         public DateTime To { get; set; }
     }
 
+    /// <summary>The inventory / low-stock report page (not date based).</summary>
+    public class InventoryReportViewModel
+    {
+        public int Threshold { get; set; }
+        public int? CategoryId { get; set; }
+        public bool LowOnly { get; set; }
+        public IEnumerable<SelectListItem> Categories { get; set; }
+
+        // Summary cards (all active products in the chosen category)
+        public int TotalProducts { get; set; }
+        public int LowStockCount { get; set; }
+        public int OutOfStockCount { get; set; }
+        public decimal StockValue { get; set; }
+
+        public TableReport Table { get; set; }
+        public List<ChartPoint> Chart { get; set; }
+    }
+
     public class ReportPagerModel
     {
         public string Action { get; set; }
         public DateTime From { get; set; }
         public DateTime To { get; set; }
         public TableReport Table { get; set; }
+
+        /// <summary>Route values for pages that aren't date based (From/To are then ignored).</summary>
+        public RouteValueDictionary Route { get; set; }
     }
 }
