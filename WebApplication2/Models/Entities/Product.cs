@@ -25,6 +25,10 @@ namespace WebApplication2.Models.Entities
         [Column(TypeName = "decimal")]
         public decimal Price { get; set; }
 
+        /// <summary>What one unit costs the business (used by the profit report).</summary>
+        [Column(TypeName = "decimal")]
+        public decimal CostPrice { get; set; } = 0;
+
         public int StockQuantity { get; set; } = 0;
 
         [MaxLength(500)]

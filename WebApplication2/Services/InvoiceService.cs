@@ -202,6 +202,7 @@ namespace WebApplication2.Services
                             ProductId = product.Id,
                             ProductName = product.NameEn,
                             UnitPrice = product.Price,
+                            UnitCost = product.CostPrice,
                             Quantity = item.Quantity,
                             DiscountPct = item.DiscountPct,
                             DiscountAmt = discountAmt,

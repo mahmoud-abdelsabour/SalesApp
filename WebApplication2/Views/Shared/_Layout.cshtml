@@ -708,6 +708,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link @(isReports && reportAction == "Profit" ? "active" : "")" href="/Reports/Profit" title="@(rAr ? "الربح والهامش" : "Profit & Margin")">
+                            <i class="fas fa-percentage"></i><span class="link-text">@(rAr ? "الربح والهامش" : "Profit & Margin")</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link @(isReports && reportAction == "Inventory" ? "active" : "")" href="/Reports/Inventory" title="@(rAr ? "المخزون" : "Inventory")">
                             <i class="fas fa-boxes"></i><span class="link-text">@(rAr ? "المخزون" : "Inventory")</span>
                         </a>

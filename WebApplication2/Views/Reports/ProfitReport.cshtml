@@ -1,0 +1,140 @@
+﻿@model WebApplication2.Models.ViewModels.ProfitReportViewModel
+@{
+    Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
+
+    ViewBag.Title = Model.Table.Title;
+    var from = Model.From.ToString("yyyy-MM-dd");
+    var to = Model.To.ToString("yyyy-MM-dd");
+
+    var labels = Model.Chart.Select(p => p.Label).ToList();
+    var values = Model.Chart.Select(p => p.Value).ToList();
+
+    var exportRoute = new { groupBy = Model.GroupBy, from = from, to = to };
+
+    var pagerRoute = new System.Web.Routing.RouteValueDictionary
+    {
+        { "groupBy", Model.GroupBy },
+        { "from", from },
+        { "to", to }
+    };
+    var rangeExtra = new System.Web.Routing.RouteValueDictionary { { "groupBy", Model.GroupBy } };
+
+    Func<string, string> switchUrl = g => Url.Action("Profit", new { groupBy = g, from = from, to = to });
+    bool lossMaking = Model.Profit < 0;
+}
+
+@Html.Partial("_KpiStyles")
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <span><i class="fas fa-percentage mr-2"></i>@Model.Table.Title</span>
+        <a href="@Url.Action("Index", new { from = from, to = to })" class="btn btn-sm btn-light">
+            <i class="fas fa-th-large mr-1"></i>@L("Overview", "نظرة عامة")
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="btn-group btn-group-sm mb-3" role="group">
+            <a href="@switchUrl("product")" class="btn @(Model.GroupBy == "product" ? "btn-primary" : "btn-outline-primary")">@L("By product", "حسب المنتج")</a>
+            <a href="@switchUrl("category")" class="btn @(Model.GroupBy == "category" ? "btn-primary" : "btn-outline-primary")">@L("By category", "حسب الفئة")</a>
+        </div>
+
+        @Html.Partial("_RangeFilter", new WebApplication2.Models.ViewModels.ReportRangeModel
+        {
+            Action = "Profit",
+            From = Model.From,
+            To = Model.To,
+            Extra = rangeExtra
+        })
+        <div class="range-note"><i class="fas fa-info-circle mr-1"></i>@L("Revenue is after item and invoice discounts; cost is the product's cost price when it was sold.", "الإيراد بعد خصم الصنف والفاتورة؛ والتكلفة هي سعر تكلفة المنتج وقت البيع.")</div>
+    </div>
+</div>
+
+@if (Model.UncostedLines > 0)
+{
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle mr-1"></i>
+        @L(Model.UncostedLines + " sold line(s) have no cost price, so their profit is overstated. Set the cost price on the product.",
+           "يوجد " + Model.UncostedLines + " بند مباع بدون سعر تكلفة، لذلك الربح له مبالغ فيه. حدّد سعر التكلفة في المنتج.")
+    </div>
+}
+
+<!-- KPIs -->
+<div class="row mb-2">
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card kpi-hero h-100"><div class="card-body kpi">
+            <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="kpi-label">@L("Revenue", "الإيراد")</div>
+                <div class="kpi-value">@Model.Revenue.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#FFF1E0;color:#E08A1E"><i class="fas fa-shopping-basket"></i></div>
+            <div>
+                <div class="kpi-label">@L("Cost", "التكلفة")</div>
+                <div class="kpi-value">@Model.Cost.ToString("N2")</div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:@(lossMaking ? "#FDE8EA;color:#E63946" : "#E6F5EE;color:#2D9B6F")"><i class="fas fa-chart-line"></i></div>
+            <div>
+                <div class="kpi-label">@L("Profit", "الربح")</div>
+                <div class="kpi-value @(lossMaking ? "text-danger" : "text-success")"><span dir="ltr">@Model.Profit.ToString("N2")</span></div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card h-100"><div class="card-body kpi">
+            <div class="kpi-icon" style="background:#F0EAFB;color:#7B4FD1"><i class="fas fa-percentage"></i></div>
+            <div>
+                <div class="kpi-label">@L("Margin", "الهامش")</div>
+                <div class="kpi-value"><span dir="ltr">@(Model.MarginPercent.HasValue ? Model.MarginPercent.Value.ToString("N2") + "%" : "—")</span></div>
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+            <small class="text-muted">@Model.Table.Subtitle</small>
+            <div class="ml-auto">
+                <a class="btn btn-sm btn-success mr-1" href="@Url.Action("ExportProfit", exportRoute)">
+                    <i class="fas fa-file-excel mr-1"></i>@L("Export Excel", "تصدير Excel")</a>
+                <a class="btn btn-sm btn-danger" target="_blank" href="@Url.Action("ExportProfitPdf", exportRoute)">
+                    <i class="fas fa-file-pdf mr-1"></i>@L("Export PDF", "تصدير PDF")</a>
+            </div>
+        </div>
+
+        <div style="height:320px" class="mb-3"><canvas id="profitChart"></canvas></div>
+
+        @Html.Partial("_ReportTable", Model.Table)
+        @Html.Partial("_ReportPager", new WebApplication2.Models.ViewModels.ReportPagerModel { Action = "Profit", Table = Model.Table, Route = pagerRoute })
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        var labels = @Html.Raw(Json.Encode(labels));
+        var values = @Html.Raw(Json.Encode(values));
+        var profitLabel = '@L("Profit", "الربح")';
+
+        if (labels.length === 0) {
+            $('#profitChart').parent().html('<p class="text-center text-muted pt-5">@L("No sales in this period", "لا توجد مبيعات في هذه الفترة")</p>');
+        } else {
+            new Chart(document.getElementById('profitChart'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: profitLabel, data: values,
+                    backgroundColor: values.map(function (v) { return v < 0 ? '#E63946' : '#7B4FD1'; }),
+                    maxBarThickness: 60 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } } }
+            });
+        }
+    </script>
+}

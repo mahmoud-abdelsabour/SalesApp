@@ -40,6 +40,10 @@ namespace WebApplication2.Models.ViewModels
         public decimal ThisMonthSales { get; set; }
         public decimal? MonthGrowthPercent { get; set; }
 
+        // Profit headline (whole period)
+        public decimal TotalProfit { get; set; }
+        public decimal? MarginPercent { get; set; }
+
         // Inventory headline: active products at or below the default low-stock threshold
         public int LowStockCount { get; set; }
         public int LowStockThreshold { get; set; }
@@ -89,6 +93,26 @@ namespace WebApplication2.Models.ViewModels
         public decimal BestPeriodSales { get; set; }
         public decimal? LatestChangePercent { get; set; }
         public string LatestPeriod { get; set; }
+
+        public TableReport Table { get; set; }
+        public List<ChartPoint> Chart { get; set; }
+    }
+
+    /// <summary>The profit & margin page: revenue minus cost, grouped by product or category.</summary>
+    public class ProfitReportViewModel
+    {
+        public string GroupBy { get; set; }       // product | category
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+
+        // Summary cards (whole period)
+        public decimal Revenue { get; set; }
+        public decimal Cost { get; set; }
+        public decimal Profit { get; set; }
+        public decimal? MarginPercent { get; set; }
+
+        /// <summary>Sold lines whose cost was 0 (cost never set): their profit is overstated.</summary>
+        public int UncostedLines { get; set; }
 
         public TableReport Table { get; set; }
         public List<ChartPoint> Chart { get; set; }

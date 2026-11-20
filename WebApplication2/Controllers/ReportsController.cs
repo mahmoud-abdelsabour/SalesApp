@@ -42,6 +42,24 @@ namespace WebApplication2.Controllers
             return PrintableReport(reports.BuildPeriodTable(granularity, from, to));
         }
 
+        // GET: Reports/Profit?groupBy=product|category&from=..&to=..&page=1
+        public ActionResult Profit(string groupBy = "product", string from = null, string to = null, int page = 1)
+        {
+            return View("ProfitReport", reports.GetProfit(groupBy, from, to, page));
+        }
+
+        // GET: Reports/ExportProfit  (Excel, all rows)
+        public ActionResult ExportProfit(string groupBy = "product", string from = null, string to = null)
+        {
+            return ExcelFile(reports.BuildProfitTable(groupBy, from, to), "Report_profit");
+        }
+
+        // GET: Reports/ExportProfitPdf  (printable, all rows; use the browser's "Save as PDF")
+        public ActionResult ExportProfitPdf(string groupBy = "product", string from = null, string to = null)
+        {
+            return PrintableReport(reports.BuildProfitTable(groupBy, from, to));
+        }
+
         // GET: Reports/ByCustomer?from=..&to=..&page=1
         public ActionResult ByCustomer(string from = null, string to = null, int page = 1)
         {

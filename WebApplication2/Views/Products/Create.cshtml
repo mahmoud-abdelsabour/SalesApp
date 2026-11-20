@@ -43,14 +43,21 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>@WebApplication2.Resources.Labels.ProductPrice <span class="text-danger">*</span></label>
                                 @Html.TextBoxFor(m => m.Price, new { @class = "form-control", type = "number", step = "0.01", min = "0.01" })
                                 @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger small" })
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>@WebApplication2.Helpers.LanguageHelper.T("Cost Price", "سعر التكلفة")</label>
+                                @Html.TextBoxFor(m => m.CostPrice, new { @class = "form-control", type = "number", step = "0.01", min = "0" })
+                                @Html.ValidationMessageFor(m => m.CostPrice, "", new { @class = "text-danger small" })
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>@WebApplication2.Resources.Labels.ProductStock</label>
                                 @Html.TextBoxFor(m => m.StockQuantity, new { @class = "form-control", type = "number", min = "0" })

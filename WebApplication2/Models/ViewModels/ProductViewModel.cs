@@ -26,6 +26,9 @@ namespace WebApplication2.Models.ViewModels
         [Range(0.01, 9999999, ErrorMessage = "Price must be greater than 0")]
         public decimal Price { get; set; }
 
+        [Range(0, 9999999, ErrorMessage = "Cost price must be 0 or more")]
+        public decimal CostPrice { get; set; }
+
         [Range(0, 999999, ErrorMessage = "Stock quantity must be 0 or more")]
         public int StockQuantity { get; set; }
 

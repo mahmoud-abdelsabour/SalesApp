@@ -80,6 +80,14 @@ namespace WebApplication2.Models.Data
                 .HasPrecision(18, 2);
 
             modelBuilder.Entity<InvoiceItem>()
+                .Property(i => i.UnitCost)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Product>()
+                .Property(p => p.CostPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<InvoiceItem>()
                 .Property(i => i.DiscountPct)
                 .HasPrecision(5, 2);
 

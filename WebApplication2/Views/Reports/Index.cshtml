@@ -184,6 +184,28 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-4 mb-3">
+        <a class="card report-card" style="--accent-color:#7B4FD1;--accent-bg:#F0EAFB" href="@Url.Action("Profit")">
+            <div class="card-body">
+                <div class="rc-icon"><i class="fas fa-percentage"></i></div>
+                <h6>@L("Profit & Margin", "الربح والهامش")</h6>
+                <div class="rc-desc">@L("Revenue minus cost, by product and category.", "الإيراد ناقص التكلفة، حسب المنتج والفئة.")</div>
+                <div class="rc-stat">
+                    <small>@L("Profit", "الربح")</small>
+                    <strong>@Model.TotalProfit.ToString("N2")</strong>
+                    @if (Model.MarginPercent.HasValue)
+                    {
+                        <span>@Model.MarginPercent.Value.ToString("N2")% @L("margin", "هامش")</span>
+                    }
+                    else
+                    {
+                        <span>@L("no sales in this period", "لا مبيعات في هذه الفترة")</span>
+                    }
+                </div>
+                <div class="rc-open">@L("Open report", "فتح التقرير") <i class="fas fa-arrow-@(ar ? "left" : "right") ml-1"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-xl-4 mb-3">
         <a class="card report-card" style="--accent-color:#E63946;--accent-bg:#FDE8EA" href="@Url.Action("Inventory")">
             <div class="card-body">
                 <div class="rc-icon"><i class="fas fa-boxes"></i></div>

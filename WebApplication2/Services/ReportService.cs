@@ -26,6 +26,7 @@ namespace WebApplication2.Services
         private class CustomerRow { public string Name { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
         private class CategoryRow { public string Name { get; set; } public int Invoices { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } }
         private class ProductRow { public string Name { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } }
+        private class ProfitRow { public string Name { get; set; } public int Qty { get; set; } public decimal Revenue { get; set; } public decimal Cost { get; set; } }
         private class InventoryRow { public string Name { get; set; } public string Category { get; set; } public int Stock { get; set; } public decimal Price { get; set; } public decimal Value { get; set; } }
 
         private readonly AppDbContext db;
@@ -53,6 +54,10 @@ namespace WebApplication2.Services
             var topProduct = ProductGroups(f, t).FirstOrDefault();
             var topCategory = CategoryGroups(f, t).FirstOrDefault();
 
+            // profit of the chosen period (revenue after every discount minus cost)
+            decimal netRevenue = NetRevenue(db.ConfirmedItems(f, t));
+            decimal profit = netRevenue - Cost(db.ConfirmedItems(f, t));
+
             // this calendar month against the previous one (independent of the chosen period)
             var monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             decimal thisMonth = db.ConfirmedInvoices(monthStart, monthStart.AddMonths(1).AddDays(-1)).Sum(i => (decimal?)i.TotalAmount) ?? 0m;
@@ -75,6 +80,8 @@ namespace WebApplication2.Services
                 TopCategory = topCategory == null ? null : topCategory.Name,
                 TopCategoryRevenue = topCategory == null ? 0m : topCategory.Revenue,
                 DateChart = DateChart(days),
+                TotalProfit = profit,
+                MarginPercent = netRevenue == 0 ? (decimal?)null : Math.Round(profit * 100 / netRevenue, 2),
                 ThisMonthSales = thisMonth,
                 MonthGrowthPercent = lastMonth == 0 ? (decimal?)null : Math.Round((thisMonth - lastMonth) * 100 / lastMonth, 2),
                 LowStockThreshold = DefaultLowStockThreshold,
@@ -381,6 +388,124 @@ namespace WebApplication2.Services
             table.Page = current;
 
             return all.Skip((current - 1) * PageSize).Take(PageSize).ToList();
+        }
+
+        // ---------- profit & margin ----------
+
+        /// <summary>
+        /// Profit by product or category: revenue (after item and invoice discounts) minus the cost
+        /// recorded on each sold line. Unlike the sales reports, revenue here already includes the
+        /// invoice-level discount, so the total matches the invoices' totals.
+        /// </summary>
+        public ProfitReportViewModel GetProfit(string groupBy, string from, string to, int page)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+            string g = NormalizeProfitGroup(groupBy);
+
+            var items = db.ConfirmedItems(f, t);
+            decimal revenue = NetRevenue(items);
+            decimal cost = Cost(items);
+
+            return new ProfitReportViewModel
+            {
+                GroupBy = g,
+                From = f,
+                To = t,
+                Revenue = revenue,
+                Cost = cost,
+                Profit = revenue - cost,
+                MarginPercent = revenue == 0 ? (decimal?)null : Math.Round((revenue - cost) * 100 / revenue, 2),
+                UncostedLines = items.Count(x => x.UnitCost == 0),
+                Table = BuildProfitTable(g, f, t, page),
+                Chart = ProfitGroups(g, f, t).Take(10).ToList()
+                    .Select(r => new ChartPoint { Label = r.Name, Value = r.Revenue - r.Cost }).ToList()
+            };
+        }
+
+        /// <summary>The whole profit report (never paged) for the Excel / PDF exports.</summary>
+        public TableReport BuildProfitTable(string groupBy, string from, string to)
+        {
+            DateTime f, t;
+            ParseRange(from, to, out f, out t);
+            return BuildProfitTable(NormalizeProfitGroup(groupBy), f, t, null);
+        }
+
+        private TableReport BuildProfitTable(string g, DateTime f, DateTime t, int? page)
+        {
+            var table = new TableReport
+            {
+                Title = LanguageHelper.T("Profit & Margin", "الربح والهامش"),
+                Subtitle = RangeText(f, t) + "  |  " + (g == "category"
+                    ? LanguageHelper.T("By category", "حسب الفئة")
+                    : LanguageHelper.T("By product", "حسب المنتج")),
+                Columns = new List<ExcelColumn>
+                {
+                    new ExcelColumn(g == "category" ? LanguageHelper.T("Category", "الفئة") : LanguageHelper.T("Product", "المنتج")),
+                    new ExcelColumn(LanguageHelper.T("Quantity Sold", "الكمية المباعة")),
+                    new ExcelColumn(LanguageHelper.T("Revenue", "الإيراد"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Cost", "التكلفة"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Profit", "الربح"), ExcelExportHelper.MoneyFormat, signed: true),
+                    new ExcelColumn(LanguageHelper.T("Margin %", "الهامش %"), ExcelExportHelper.MoneyFormat, signed: true)
+                }
+            };
+
+            var rows = Fetch(ProfitGroups(g, f, t), page, table);
+            table.Rows = rows.Select(r => new object[]
+            {
+                r.Name,
+                r.Qty,
+                r.Revenue,
+                r.Cost,
+                r.Revenue - r.Cost,
+                r.Revenue == 0 ? 0m : Math.Round((r.Revenue - r.Cost) * 100 / r.Revenue, 2)
+            }).ToList();
+            return table;
+        }
+
+        private IQueryable<ProfitRow> ProfitGroups(string g, DateTime f, DateTime t)
+        {
+            var items = db.ConfirmedItems(f, t);
+
+            if (g == "category")
+            {
+                return items
+                    .GroupBy(x => new { x.Product.CategoryId, x.Product.Category.NameEn })
+                    .Select(grp => new ProfitRow
+                    {
+                        Name = grp.Key.NameEn,
+                        Qty = grp.Sum(x => x.Quantity),
+                        Revenue = grp.Sum(x => x.LineTotal * (1 - x.Invoice.InvoiceDiscountPct / 100m)),
+                        Cost = grp.Sum(x => x.UnitCost * x.Quantity)
+                    })
+                    .OrderByDescending(r => r.Revenue - r.Cost).ThenBy(r => r.Name);
+            }
+
+            return items
+                .GroupBy(x => new { x.ProductId, x.ProductName })
+                .Select(grp => new ProfitRow
+                {
+                    Name = grp.Key.ProductName,
+                    Qty = grp.Sum(x => x.Quantity),
+                    Revenue = grp.Sum(x => x.LineTotal * (1 - x.Invoice.InvoiceDiscountPct / 100m)),
+                    Cost = grp.Sum(x => x.UnitCost * x.Quantity)
+                })
+                .OrderByDescending(r => r.Revenue - r.Cost).ThenBy(r => r.Name);
+        }
+
+        private static decimal NetRevenue(IQueryable<InvoiceItem> items)
+        {
+            return items.Sum(x => (decimal?)(x.LineTotal * (1 - x.Invoice.InvoiceDiscountPct / 100m))) ?? 0m;
+        }
+
+        private static decimal Cost(IQueryable<InvoiceItem> items)
+        {
+            return items.Sum(x => (decimal?)(x.UnitCost * x.Quantity)) ?? 0m;
+        }
+
+        private static string NormalizeProfitGroup(string groupBy)
+        {
+            return string.Equals(groupBy, "category", StringComparison.OrdinalIgnoreCase) ? "category" : "product";
         }
 
         // ---------- inventory / low stock ----------

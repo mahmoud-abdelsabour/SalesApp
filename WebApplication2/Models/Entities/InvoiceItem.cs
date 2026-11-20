@@ -20,6 +20,10 @@ namespace WebApplication2.Models.Entities
         [Column(TypeName = "decimal")]
         public decimal UnitPrice { get; set; }
 
+        /// <summary>The product's cost per unit when it was sold (kept so later cost changes don't rewrite old profit).</summary>
+        [Column(TypeName = "decimal")]
+        public decimal UnitCost { get; set; } = 0;
+
         public int Quantity { get; set; }
 
         [Column(TypeName = "decimal")]

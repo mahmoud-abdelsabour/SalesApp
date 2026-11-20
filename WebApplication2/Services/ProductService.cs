@@ -97,6 +97,7 @@ namespace WebApplication2.Services
                 NameAr = product.NameAr,
                 CategoryId = product.CategoryId,
                 Price = product.Price,
+                CostPrice = product.CostPrice,
                 StockQuantity = product.StockQuantity,
                 Description = product.Description,
                 IsActive = product.IsActive
@@ -122,6 +123,7 @@ namespace WebApplication2.Services
                 NameAr = model.NameAr,
                 CategoryId = model.CategoryId,
                 Price = model.Price,
+                CostPrice = model.CostPrice,
                 StockQuantity = model.StockQuantity,
                 Description = model.Description,
                 IsActive = true,
@@ -145,6 +147,7 @@ namespace WebApplication2.Services
             product.NameAr = model.NameAr;
             product.CategoryId = model.CategoryId;
             product.Price = model.Price;
+            product.CostPrice = model.CostPrice;
             product.StockQuantity = model.StockQuantity;
             product.Description = model.Description;
             db.SaveChanges();

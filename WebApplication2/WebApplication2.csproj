@@ -168,6 +168,10 @@
     <Compile Include="Migrations\202611162114345_AddRowVersionAndUniqueInvoiceNumber.Designer.cs">
       <DependentUpon>202611162114345_AddRowVersionAndUniqueInvoiceNumber.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202611201826372_AddCostPrice.cs" />
+    <Compile Include="Migrations\202611201826372_AddCostPrice.Designer.cs">
+      <DependentUpon>202611201826372_AddCostPrice.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ConcurrentSession.cs" />
     <Compile Include="Models\Data\AppDbContext.cs" />
@@ -270,6 +274,7 @@
     <Content Include="Views\Invoices\Index.cshtml" />
     <Content Include="Views\Invoices\Details.cshtml" />
     <Content Include="Views\Invoices\Print.cshtml" />
+    <Content Include="Views\Reports\ProfitReport.cshtml" />
     <Content Include="Views\Reports\InventoryReport.cshtml" />
     <Content Include="Views\Reports\Index.cshtml" />
     <Content Include="Views\Reports\_KpiStyles.cshtml" />
@@ -330,6 +335,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202611162114345_AddRowVersionAndUniqueInvoiceNumber.resx">
       <DependentUpon>202611162114345_AddRowVersionAndUniqueInvoiceNumber.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202611201826372_AddCostPrice.resx">
+      <DependentUpon>202611201826372_AddCostPrice.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Labels.ar.resx" />
     <EmbeddedResource Include="Resources\Labels.resx">
