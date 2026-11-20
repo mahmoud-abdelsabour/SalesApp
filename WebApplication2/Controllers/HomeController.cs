@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web.Mvc;
 using WebApplication2.Filters;
 using WebApplication2.Models.Data;
+using WebApplication2.Models.Entities;
 
 namespace WebApplication2.Controllers
 {
@@ -19,7 +20,7 @@ namespace WebApplication2.Controllers
             ViewBag.TotalCustomers = db.Customers.Count(c => c.IsActive);
             ViewBag.TotalInvoices = db.Invoices.Count();
             ViewBag.TotalRevenue = db.Invoices
-                .Where(i => i.Status == "Confirmed")
+                .Where(i => i.Status == InvoiceStatus.Confirmed)
                 .Sum(i => (decimal?)i.TotalAmount) ?? 0;
 
             return View();
@@ -31,7 +32,7 @@ namespace WebApplication2.Controllers
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
             var data = db.Invoices
-                .Where(i => i.Status == "Confirmed" && i.InvoiceDate >= thirtyDaysAgo)
+                .Where(i => i.Status == InvoiceStatus.Confirmed && i.InvoiceDate >= thirtyDaysAgo)
                 .GroupBy(i => System.Data.Entity.DbFunctions.TruncateTime(i.InvoiceDate))
                 .Select(g => new
                 {
@@ -51,7 +52,7 @@ namespace WebApplication2.Controllers
         public JsonResult GetTopProducts()
         {
             var data = db.InvoiceItems
-                .Where(i => i.Invoice.Status == "Confirmed")
+                .Where(i => i.Invoice.Status == InvoiceStatus.Confirmed)
                 .GroupBy(i => i.ProductName)
                 .Select(g => new
                 {
@@ -72,7 +73,7 @@ namespace WebApplication2.Controllers
         public JsonResult GetRevenueByCategory()
         {
             var data = db.InvoiceItems
-                .Where(i => i.Invoice.Status == "Confirmed")
+                .Where(i => i.Invoice.Status == InvoiceStatus.Confirmed)
                 .GroupBy(i => i.Product.Category.NameEn)
                 .Select(g => new
                 {

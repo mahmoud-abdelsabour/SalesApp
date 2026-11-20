@@ -115,7 +115,7 @@
     <div class="hint">@hint</div>
 
     <div class="sheet">
-        @if (Model.Status == "Cancelled")
+        @if (Model.Status == InvoiceStatus.Cancelled)
         {
             <div class="watermark">@WebApplication2.Resources.Labels.StatusCancelled</div>
         }
@@ -131,11 +131,11 @@
             <div class="meta">
                 <h2>@WebApplication2.Resources.Labels.InvoiceNumber: @Model.InvoiceNumber</h2>
                 <p>@WebApplication2.Resources.Labels.InvoiceDate: @Model.InvoiceDate.ToString("yyyy-MM-dd HH:mm")</p>
-                @if (Model.Status == "Confirmed")
+                @if (Model.Status == InvoiceStatus.Confirmed)
                 {
                     <span class="status status-confirmed">@WebApplication2.Resources.Labels.StatusConfirmed</span>
                 }
-                else if (Model.Status == "Cancelled")
+                else if (Model.Status == InvoiceStatus.Cancelled)
                 {
                     <span class="status status-cancelled">@WebApplication2.Resources.Labels.StatusCancelled</span>
                 }

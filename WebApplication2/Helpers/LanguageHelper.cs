@@ -29,6 +29,12 @@ namespace WebApplication2.Helpers
             return GetLanguage() == "ar";
         }
 
+        /// <summary>Picks the English or Arabic text for the current language.</summary>
+        public static string T(string en, string ar)
+        {
+            return IsArabic() ? ar : en;
+        }
+
         public static void ApplyLanguage()
         {
             var lang = GetLanguage();

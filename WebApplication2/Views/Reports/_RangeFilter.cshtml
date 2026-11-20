@@ -1,7 +1,7 @@
 ﻿@model WebApplication2.Models.ViewModels.ReportRangeModel
 @{
     var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
-    Func<string, string, string> L = (en, arText) => ar ? arText : en;
+    Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
 }
 <form method="get" action="@Url.Action(Model.Action, "Reports")" id="rangeForm" class="range-bar">
     <div class="range-dates">

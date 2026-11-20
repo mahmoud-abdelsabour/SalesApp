@@ -236,7 +236,7 @@ namespace WebApplication2.Controllers
                         Notes = model.Notes,
                         CreatedBy = user.Id,
                         CreatedAt = DateTime.Now,
-                        Status = "Confirmed"
+                        Status = InvoiceStatus.Confirmed
                     };
 
                     // Calculate line items
@@ -445,7 +445,7 @@ namespace WebApplication2.Controllers
             if (invoice == null)
                 return Json(new { success = false, message = "Invoice not found." });
 
-            if (invoice.Status == "Cancelled")
+            if (invoice.Status == InvoiceStatus.Cancelled)
                 return Json(new { success = false, message = "Invoice is already cancelled." });
 
             using (var transaction = db.Database.BeginTransaction())
@@ -461,7 +461,7 @@ namespace WebApplication2.Controllers
                             product.StockQuantity += item.Quantity;
                     }
 
-                    invoice.Status = "Cancelled";
+                    invoice.Status = InvoiceStatus.Cancelled;
                     db.SaveChanges();
                     transaction.Commit();
 

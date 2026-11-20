@@ -42,8 +42,8 @@
                     <label class="small">@WebApplication2.Resources.Labels.FilterStatus</label>
                     <select name="status" class="form-control form-control-sm">
                         <option value="">@WebApplication2.Resources.Labels.FilterAll</option>
-                        <option value="Confirmed" @(ViewBag.Status == "Confirmed" ? "selected" : "")>@WebApplication2.Resources.Labels.FilterConfirmed</option>
-                        <option value="Cancelled" @(ViewBag.Status == "Cancelled" ? "selected" : "")>@WebApplication2.Resources.Labels.FilterCancelled</option>
+                        <option value="@InvoiceStatus.Confirmed" @(ViewBag.Status == InvoiceStatus.Confirmed ? "selected" : "")>@WebApplication2.Resources.Labels.FilterConfirmed</option>
+                        <option value="@InvoiceStatus.Cancelled" @(ViewBag.Status == InvoiceStatus.Cancelled ? "selected" : "")>@WebApplication2.Resources.Labels.FilterCancelled</option>
                     </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
@@ -93,11 +93,11 @@
                                 <td>@item.InvoiceDate.ToString("yyyy-MM-dd HH:mm")</td>
                                 <td>@item.TotalAmount.ToString("N2")</td>
                                 <td>
-                                    @if (item.Status == "Confirmed")
+                                    @if (item.Status == InvoiceStatus.Confirmed)
                                     {
                                         <span class="badge badge-success">@WebApplication2.Resources.Labels.StatusConfirmed</span>
                                     }
-                                    else if (item.Status == "Cancelled")
+                                    else if (item.Status == InvoiceStatus.Cancelled)
                                     {
                                         <span class="badge badge-danger">@WebApplication2.Resources.Labels.StatusCancelled</span>
                                     }
@@ -113,7 +113,7 @@
                                     <a href="/Invoices/Print/@item.Id" target="_blank" class="btn btn-sm btn-secondary">
                                         <i class="fas fa-print"></i>
                                     </a>
-                                    @if (item.Status != "Cancelled")
+                                    @if (item.Status != InvoiceStatus.Cancelled)
                                     {
                                         <button class="btn btn-sm btn-danger"
                                                 onclick="confirmCancel(@item.Id, '@item.InvoiceNumber')">

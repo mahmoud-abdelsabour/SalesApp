@@ -19,11 +19,6 @@ namespace WebApplication2.Controllers
 
         private AppDbContext db = new AppDbContext();
 
-        private static string T(string en, string ar)
-        {
-            return LanguageHelper.IsArabic() ? ar : en;
-        }
-
         // Row shapes for the grouped queries (so paging can run in the database)
         private class DateRow { public DateTime? Day { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
         private class CustomerRow { public string Name { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
@@ -108,7 +103,7 @@ namespace WebApplication2.Controllers
             var model = new ReportPageViewModel
             {
                 Action = "ByProduct", Type = "product", Icon = "box", ChartKind = "bar",
-                Note = T("Revenue is before invoice-level discount.", "الإيراد قبل خصم الفاتورة."),
+                Note = LanguageHelper.T("Revenue is before invoice-level discount.", "الإيراد قبل خصم الفاتورة."),
                 From = f, To = t,
                 Table = BuildProductTable(f, t, page),
                 Chart = ProductGroups(f, t).Take(10).ToList()
@@ -168,21 +163,21 @@ namespace WebApplication2.Controllers
         {
             // LRM marks keep each date in left-to-right order inside RTL text
             const string lrm = "‎";
-            return T("From", "من") + " " + lrm + f.ToString("yyyy-MM-dd") + lrm + " " +
-                   T("to", "إلى") + " " + lrm + t.ToString("yyyy-MM-dd") + lrm;
+            return LanguageHelper.T("From", "من") + " " + lrm + f.ToString("yyyy-MM-dd") + lrm + " " +
+                   LanguageHelper.T("to", "إلى") + " " + lrm + t.ToString("yyyy-MM-dd") + lrm;
         }
 
         // Only confirmed invoices count as sales (cancelled ones are excluded)
         private IQueryable<Invoice> Sales(DateTime f, DateTime t)
         {
             var end = t.AddDays(1);
-            return db.Invoices.Where(i => i.Status == "Confirmed" && i.InvoiceDate >= f && i.InvoiceDate < end);
+            return db.Invoices.Where(i => i.Status == InvoiceStatus.Confirmed && i.InvoiceDate >= f && i.InvoiceDate < end);
         }
 
         private IQueryable<InvoiceItem> SaleItems(DateTime f, DateTime t)
         {
             var end = t.AddDays(1);
-            return db.InvoiceItems.Where(x => x.Invoice.Status == "Confirmed" &&
+            return db.InvoiceItems.Where(x => x.Invoice.Status == InvoiceStatus.Confirmed &&
                                               x.Invoice.InvoiceDate >= f && x.Invoice.InvoiceDate < end);
         }
 
@@ -233,14 +228,14 @@ namespace WebApplication2.Controllers
         {
             var table = new TableReport
             {
-                Title = T("Sales by Date", "المبيعات حسب التاريخ"),
+                Title = LanguageHelper.T("Sales by Date", "المبيعات حسب التاريخ"),
                 Subtitle = RangeText(f, t),
                 Columns = new List<ExcelColumn>
                 {
-                    new ExcelColumn(T("Date", "التاريخ"), ExcelExportHelper.DateFormat),
-                    new ExcelColumn(T("Invoices", "الفواتير")),
-                    new ExcelColumn(T("Total Sales", "إجمالي المبيعات"), ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(T("Average Invoice", "متوسط الفاتورة"), ExcelExportHelper.MoneyFormat)
+                    new ExcelColumn(LanguageHelper.T("Date", "التاريخ"), ExcelExportHelper.DateFormat),
+                    new ExcelColumn(LanguageHelper.T("Invoices", "الفواتير")),
+                    new ExcelColumn(LanguageHelper.T("Total Sales", "إجمالي المبيعات"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Average Invoice", "متوسط الفاتورة"), ExcelExportHelper.MoneyFormat)
                 }
             };
 
@@ -256,14 +251,14 @@ namespace WebApplication2.Controllers
         {
             var table = new TableReport
             {
-                Title = T("Sales by Customer", "المبيعات حسب العميل"),
+                Title = LanguageHelper.T("Sales by Customer", "المبيعات حسب العميل"),
                 Subtitle = RangeText(f, t),
                 Columns = new List<ExcelColumn>
                 {
-                    new ExcelColumn(T("Customer", "العميل")),
-                    new ExcelColumn(T("Invoices", "الفواتير")),
-                    new ExcelColumn(T("Total Sales", "إجمالي المبيعات"), ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(T("Share %", "النسبة %"), ExcelExportHelper.MoneyFormat)
+                    new ExcelColumn(LanguageHelper.T("Customer", "العميل")),
+                    new ExcelColumn(LanguageHelper.T("Invoices", "الفواتير")),
+                    new ExcelColumn(LanguageHelper.T("Total Sales", "إجمالي المبيعات"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Share %", "النسبة %"), ExcelExportHelper.MoneyFormat)
                 }
             };
 
@@ -282,14 +277,14 @@ namespace WebApplication2.Controllers
         {
             var table = new TableReport
             {
-                Title = T("Sales by Product", "المبيعات حسب المنتج"),
-                Subtitle = RangeText(f, t) + "  |  " + T("Revenue is before invoice-level discount", "الإيراد قبل خصم الفاتورة"),
+                Title = LanguageHelper.T("Sales by Product", "المبيعات حسب المنتج"),
+                Subtitle = RangeText(f, t) + "  |  " + LanguageHelper.T("Revenue is before invoice-level discount", "الإيراد قبل خصم الفاتورة"),
                 Columns = new List<ExcelColumn>
                 {
-                    new ExcelColumn(T("Product", "المنتج")),
-                    new ExcelColumn(T("Quantity Sold", "الكمية المباعة")),
-                    new ExcelColumn(T("Revenue", "الإيراد"), ExcelExportHelper.MoneyFormat),
-                    new ExcelColumn(T("Share %", "النسبة %"), ExcelExportHelper.MoneyFormat)
+                    new ExcelColumn(LanguageHelper.T("Product", "المنتج")),
+                    new ExcelColumn(LanguageHelper.T("Quantity Sold", "الكمية المباعة")),
+                    new ExcelColumn(LanguageHelper.T("Revenue", "الإيراد"), ExcelExportHelper.MoneyFormat),
+                    new ExcelColumn(LanguageHelper.T("Share %", "النسبة %"), ExcelExportHelper.MoneyFormat)
                 }
             };
 

@@ -40,7 +40,7 @@ namespace WebApplication2.Models.Entities
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [MaxLength(50)]
-        public string Status { get; set; } = "Draft";
+        public string Status { get; set; } = InvoiceStatus.Draft;
 
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; }

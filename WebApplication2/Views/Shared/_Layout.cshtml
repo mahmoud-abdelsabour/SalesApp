@@ -538,6 +538,13 @@
                 text-align: right;
             }
 
+        /* Bootstrap 4 margins are physical: flip icon/text spacing in RTL */
+        [dir="rtl"] .mr-1 { margin-right: 0 !important; margin-left: 0.25rem !important; }
+        [dir="rtl"] .mr-2 { margin-right: 0 !important; margin-left: 0.5rem !important; }
+        [dir="rtl"] .mr-3 { margin-right: 0 !important; margin-left: 1rem !important; }
+        [dir="rtl"] .ml-1 { margin-left: 0 !important; margin-right: 0.25rem !important; }
+        [dir="rtl"] .ml-2 { margin-left: 0 !important; margin-right: 0.5rem !important; }
+
         [dir="rtl"] .card-header {
             text-align: right;
         }

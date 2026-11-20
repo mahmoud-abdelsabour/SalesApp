@@ -32,11 +32,11 @@
                 <h5 class="font-weight-bold">@WebApplication2.Resources.Labels.InvoiceNumber: @Model.InvoiceNumber</h5>
                 <p class="mb-0">@WebApplication2.Resources.Labels.InvoiceDate: @Model.InvoiceDate.ToString("yyyy-MM-dd HH:mm")</p>
                 <p class="mb-0">
-                    @if (Model.Status == "Confirmed")
+                    @if (Model.Status == InvoiceStatus.Confirmed)
                     {
                         <span class="badge badge-success">@WebApplication2.Resources.Labels.StatusConfirmed</span>
                     }
-                    else if (Model.Status == "Cancelled")
+                    else if (Model.Status == InvoiceStatus.Cancelled)
                     {
                         <span class="badge badge-danger">@WebApplication2.Resources.Labels.StatusCancelled</span>
                     }

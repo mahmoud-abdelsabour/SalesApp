@@ -1,7 +1,7 @@
 ﻿@model WebApplication2.Models.ViewModels.ReportsViewModel
 @{
     var ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
-    Func<string, string, string> L = (en, arText) => ar ? arText : en;
+    Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
 
     ViewBag.Title = L("Reports", "التقارير");
     var from = Model.From.ToString("yyyy-MM-dd");
