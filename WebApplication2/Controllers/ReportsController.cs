@@ -79,19 +79,19 @@ namespace WebApplication2.Controllers
         }
 
         // GET: Reports/Inventory?threshold=10&categoryId=..&lowOnly=true&page=1
-        public ActionResult Inventory(int threshold = ReportService.DefaultLowStockThreshold, int? categoryId = null, bool lowOnly = false, int page = 1)
+        public ActionResult Inventory(int? threshold = null, int? categoryId = null, bool lowOnly = false, int page = 1)
         {
             return View("InventoryReport", reports.GetInventory(threshold, categoryId, lowOnly, page));
         }
 
         // GET: Reports/ExportInventory  (Excel, all rows)
-        public ActionResult ExportInventory(int threshold = ReportService.DefaultLowStockThreshold, int? categoryId = null, bool lowOnly = false)
+        public ActionResult ExportInventory(int? threshold = null, int? categoryId = null, bool lowOnly = false)
         {
             return ExcelFile(reports.BuildInventoryTable(threshold, categoryId, lowOnly), "Report_inventory");
         }
 
         // GET: Reports/ExportInventoryPdf  (printable, all rows; use the browser's "Save as PDF")
-        public ActionResult ExportInventoryPdf(int threshold = ReportService.DefaultLowStockThreshold, int? categoryId = null, bool lowOnly = false)
+        public ActionResult ExportInventoryPdf(int? threshold = null, int? categoryId = null, bool lowOnly = false)
         {
             return PrintableReport(reports.BuildInventoryTable(threshold, categoryId, lowOnly));
         }

@@ -22,7 +22,22 @@ namespace WebApplication2.Controllers
             ViewBag.TotalInvoices = summary.Invoices;
             ViewBag.TotalRevenue = summary.Revenue;
 
-            return View();
+            return View(dashboard.GetLowStock());
+        }
+
+        // POST: Home/SetLowStockThreshold  (the level behind the dashboard alert and the inventory report)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SetLowStockThreshold(int? threshold)
+        {
+            var result = new SettingsService(Db).SetLowStockThreshold(threshold);
+
+            if (result.Success)
+                TempData["Success"] = result.Message;
+            else
+                TempData["Error"] = result.Error;
+
+            return RedirectToAction("Index");
         }
 
         // AJAX: Sales over last 30 days

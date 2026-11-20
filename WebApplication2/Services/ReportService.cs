@@ -18,8 +18,8 @@ namespace WebApplication2.Services
     {
         private const int PageSize = 15;
 
-        /// <summary>Products with this much stock or less count as "low stock" unless the user picks another level.</summary>
-        public const int DefaultLowStockThreshold = 10;
+        // The low-stock level comes from the saved setting unless a report is asked for another one
+        private int SavedThreshold { get { return new SettingsService(db).GetLowStockThreshold(); } }
 
         // Row shapes for the grouped queries (so paging can run in the database)
         private class DateRow { public DateTime? Day { get; set; } public int Count { get; set; } public decimal Total { get; set; } }
@@ -54,6 +54,8 @@ namespace WebApplication2.Services
             var topProduct = ProductGroups(f, t).FirstOrDefault();
             var topCategory = CategoryGroups(f, t).FirstOrDefault();
 
+            int lowThreshold = SavedThreshold;
+
             // profit of the chosen period (revenue after every discount minus cost)
             decimal netRevenue = NetRevenue(db.ConfirmedItems(f, t));
             decimal profit = netRevenue - Cost(db.ConfirmedItems(f, t));
@@ -84,8 +86,8 @@ namespace WebApplication2.Services
                 MarginPercent = netRevenue == 0 ? (decimal?)null : Math.Round(profit * 100 / netRevenue, 2),
                 ThisMonthSales = thisMonth,
                 MonthGrowthPercent = lastMonth == 0 ? (decimal?)null : Math.Round((thisMonth - lastMonth) * 100 / lastMonth, 2),
-                LowStockThreshold = DefaultLowStockThreshold,
-                LowStockCount = db.Products.Count(p => p.IsActive && p.StockQuantity <= DefaultLowStockThreshold)
+                LowStockThreshold = lowThreshold,
+                LowStockCount = db.Products.Count(p => p.IsActive && p.StockQuantity <= lowThreshold)
             };
         }
 
@@ -514,9 +516,9 @@ namespace WebApplication2.Services
         /// Stock levels of active products: summary cards for the chosen category, the lowest-stock chart,
         /// and one page of the table (optionally only products at or below the threshold).
         /// </summary>
-        public InventoryReportViewModel GetInventory(int threshold, int? categoryId, bool lowOnly, int page)
+        public InventoryReportViewModel GetInventory(int? thresholdOrSaved, int? categoryId, bool lowOnly, int page)
         {
-            threshold = Math.Max(0, threshold);
+            int threshold = Math.Max(0, thresholdOrSaved ?? SavedThreshold);
             var scope = InventoryScope(categoryId);
 
             return new InventoryReportViewModel
@@ -537,9 +539,9 @@ namespace WebApplication2.Services
         }
 
         /// <summary>The whole inventory report (never paged) for the Excel / PDF exports.</summary>
-        public TableReport BuildInventoryTable(int threshold, int? categoryId, bool lowOnly)
+        public TableReport BuildInventoryTable(int? thresholdOrSaved, int? categoryId, bool lowOnly)
         {
-            return BuildInventoryTable(Math.Max(0, threshold), categoryId, lowOnly, null);
+            return BuildInventoryTable(Math.Max(0, thresholdOrSaved ?? SavedThreshold), categoryId, lowOnly, null);
         }
 
         private TableReport BuildInventoryTable(int threshold, int? categoryId, bool lowOnly, int? page)

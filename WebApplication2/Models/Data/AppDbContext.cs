@@ -16,6 +16,7 @@ namespace WebApplication2.Models.Data
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
+        public DbSet<AppSetting> AppSettings { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

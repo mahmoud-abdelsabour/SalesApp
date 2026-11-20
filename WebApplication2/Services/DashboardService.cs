@@ -15,6 +15,23 @@ namespace WebApplication2.Services
         public decimal Revenue { get; set; }
     }
 
+    public class LowStockItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Category { get; set; }
+        public int Stock { get; set; }
+    }
+
+    /// <summary>The dashboard's low-stock alert: how many products, and the ones closest to running out.</summary>
+    public class LowStockSummary
+    {
+        public int Threshold { get; set; }
+        public int Count { get; set; }
+        public int OutOfStock { get; set; }
+        public List<LowStockItem> Items { get; set; }
+    }
+
     /// <summary>Labels and values for one dashboard chart.</summary>
     public class ChartSeries
     {
@@ -41,6 +58,43 @@ namespace WebApplication2.Services
                 Customers = db.Customers.Count(c => c.IsActive),
                 Invoices = db.Invoices.Count(),
                 Revenue = db.ConfirmedInvoices().Sum(i => (decimal?)i.TotalAmount) ?? 0
+            };
+        }
+
+        /// <summary>Active products at or below the saved low-stock level, lowest stock first (the worst few are listed).</summary>
+        public LowStockSummary GetLowStock(int listSize = 6)
+        {
+            int threshold = new SettingsService(db).GetLowStockThreshold();
+            bool ar = WebApplication2.Helpers.LanguageHelper.IsArabic();
+
+            var low = db.Products.Where(p => p.IsActive && p.StockQuantity <= threshold);
+
+            var items = low
+                .OrderBy(p => p.StockQuantity).ThenBy(p => p.NameEn)
+                .Take(listSize)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.NameEn,
+                    p.NameAr,
+                    CategoryEn = p.Category.NameEn,
+                    CategoryAr = p.Category.NameAr,
+                    p.StockQuantity
+                })
+                .ToList();
+
+            return new LowStockSummary
+            {
+                Threshold = threshold,
+                Count = low.Count(),
+                OutOfStock = low.Count(p => p.StockQuantity == 0),
+                Items = items.Select(p => new LowStockItem
+                {
+                    Id = p.Id,
+                    Name = ar ? p.NameAr : p.NameEn,
+                    Category = ar ? p.CategoryAr : p.CategoryEn,
+                    Stock = p.StockQuantity
+                }).ToList()
             };
         }
 
