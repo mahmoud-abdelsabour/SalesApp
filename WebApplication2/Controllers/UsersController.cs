@@ -6,13 +6,20 @@ using WebApplication2.Helpers;
 using WebApplication2.Models.Data;
 using WebApplication2.Models.Entities;
 using WebApplication2.Models.ViewModels;
+using WebApplication2.Services;
 
 namespace WebApplication2.Controllers
 {
     [CustomAuthorize]
     public class UsersController : Controller
     {
-        private AppDbContext db = new AppDbContext();
+        private readonly AppDbContext db = new AppDbContext();
+        private readonly SessionService sessions;
+
+        public UsersController()
+        {
+            sessions = new SessionService(db);
+        }
 
         // GET: Users
         public ActionResult Index()
@@ -129,17 +136,9 @@ namespace WebApplication2.Controllers
             // The login cookie stores the username: reissue it so the current session keeps working
             if (renamedSelf)
             {
-                var cookie = Request.Cookies[System.Web.Security.FormsAuthentication.FormsCookieName];
-                var oldTicket = cookie == null ? null : System.Web.Security.FormsAuthentication.Decrypt(cookie.Value);
-                if (oldTicket != null)
-                {
-                    var newTicket = new System.Web.Security.FormsAuthenticationTicket(
-                        oldTicket.Version, user.Username, oldTicket.IssueDate,
-                        oldTicket.Expiration, oldTicket.IsPersistent, oldTicket.UserData);
-                    Response.Cookies.Add(new System.Web.HttpCookie(
-                        System.Web.Security.FormsAuthentication.FormsCookieName,
-                        System.Web.Security.FormsAuthentication.Encrypt(newTicket)));
-                }
+                var cookie = AuthCookieHelper.CreateRenamedCookie(Request, user.Username);
+                if (cookie != null)
+                    Response.Cookies.Add(cookie);
             }
 
             TempData["Success"] = Resources.Labels.SaveSuccess;
@@ -212,12 +211,9 @@ namespace WebApplication2.Controllers
 
             user.IsActive = !user.IsActive;
 
-            // Deactivated users must be signed out everywhere: drop their active sessions
+            // Deactivated users must be signed out everywhere (saved together with the status change)
             if (!user.IsActive)
-            {
-                var sessions = db.ConcurrentSessions.Where(s => s.UserId == user.Id).ToList();
-                db.ConcurrentSessions.RemoveRange(sessions);
-            }
+                sessions.EndAllSessions(user.Id);
 
             db.SaveChanges();
 
@@ -226,33 +222,13 @@ namespace WebApplication2.Controllers
             // If user deactivated themselves, sign them out
             if (!user.IsActive && user.Username == User.Identity.Name)
             {
-                // Remove concurrent session
-                var token = GetCurrentSessionToken();
-                if (token != null)
-                {
-                    var session = db.ConcurrentSessions.FirstOrDefault(s => s.SessionToken == token);
-                    if (session != null)
-                    {
-                        db.ConcurrentSessions.Remove(session);
-                        db.SaveChanges();
-                    }
-                }
+                sessions.EndSession(AuthCookieHelper.GetSessionToken(Request));
                 return Json(new { success = true, message, isActive = user.IsActive, signOut = true });
             }
 
             return Json(new { success = true, message, isActive = user.IsActive, signOut = false });
         }
-        private string GetCurrentSessionToken()
-        {
-            var cookie = Request.Cookies[System.Web.Security.FormsAuthentication.FormsCookieName];
-            if (cookie == null) return null;
-            try
-            {
-                var ticket = System.Web.Security.FormsAuthentication.Decrypt(cookie.Value);
-                return ticket?.UserData;
-            }
-            catch { return null; }
-        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();

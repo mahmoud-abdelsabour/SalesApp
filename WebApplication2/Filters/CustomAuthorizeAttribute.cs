@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Web;
+﻿using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
+using WebApplication2.Helpers;
 using WebApplication2.Models.Data;
+using WebApplication2.Services;
 
 namespace WebApplication2.Filters
 {
@@ -23,29 +23,16 @@ namespace WebApplication2.Filters
             if (!httpContext.User.Identity.IsAuthenticated)
                 return false;
 
-            var cookie = httpContext.Request.Cookies[FormsAuthentication.FormsCookieName];
-            if (cookie == null) return false;
+            var ticket = AuthCookieHelper.GetTicket(httpContext.Request);
+            if (ticket == null || ticket.Expired) return false;
 
             try
             {
-                var ticket = FormsAuthentication.Decrypt(cookie.Value);
-                if (ticket == null || ticket.Expired) return false;
-
-                var sessionToken = ticket.UserData;
-                if (string.IsNullOrEmpty(sessionToken)) return false;
-
+                // The cookie is only valid while its session row exists (single-session control)
                 using (var db = new AppDbContext())
                 {
-                    var session = db.ConcurrentSessions
-                        .FirstOrDefault(s => s.SessionToken == sessionToken);
-
-                    if (session == null) return false;
-
-                    session.LastActivity = DateTime.Now;
-                    db.SaveChanges();
+                    return new SessionService(db).ValidateAndTouch(ticket.UserData);
                 }
-
-                return true;
             }
             catch
             {
