@@ -1,0 +1,47 @@
+﻿@model WebApplication2.Models.ViewModels.SettingsViewModel
+@{
+    Func<string, string, string> L = WebApplication2.Helpers.LanguageHelper.T;
+    ViewBag.Title = L("Settings", "الإعدادات");
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cog mr-2"></i>@L("Settings", "الإعدادات")
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("Index", "Settings", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <!-- Inventory -->
+                    <div class="settings-section">
+                        <h6 class="settings-title"><i class="fas fa-boxes mr-2"></i>@L("Inventory", "المخزون")</h6>
+
+                        <div class="form-group">
+                            <label for="LowStockThreshold">@L("Low-stock level", "حد المخزون المنخفض")</label>
+                            @Html.TextBoxFor(m => m.LowStockThreshold, new { @class = "form-control", type = "number", min = "0", max = "100000", style = "max-width:200px", required = "required" })
+                            @Html.ValidationMessageFor(m => m.LowStockThreshold, "", new { @class = "text-danger small" })
+                            <small class="form-text text-muted">
+                                @L("A product with this many units or fewer is flagged as low stock on the dashboard and in the Inventory report.",
+                                   "يُعتبر المنتج منخفض المخزون عندما تكون كميته بهذا العدد أو أقل، ويظهر ذلك في لوحة التحكم وتقرير المخزون.")
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-1"></i>@L("Save", "حفظ")
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .settings-section + .settings-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #EEF1F5; }
+    .settings-title { font-weight: 700; color: #0D1B2A; margin-bottom: 1rem; }
+</style>

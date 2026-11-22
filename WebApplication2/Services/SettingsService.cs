@@ -4,6 +4,7 @@ using System.Linq;
 using WebApplication2.Helpers;
 using WebApplication2.Models.Data;
 using WebApplication2.Models.Entities;
+using WebApplication2.Models.ViewModels;
 using WebApplication2.Services.Common;
 
 namespace WebApplication2.Services
@@ -34,12 +35,28 @@ namespace WebApplication2.Services
             return DefaultLowStockThreshold;
         }
 
+        /// <summary>Current value of every option, for the Settings page.</summary>
+        public SettingsViewModel GetAll()
+        {
+            return new SettingsViewModel { LowStockThreshold = GetLowStockThreshold() };
+        }
+
+        /// <summary>Validates and saves every option on the Settings page.</summary>
+        public ServiceResult Save(SettingsViewModel model)
+        {
+            var result = SetLowStockThreshold(model.LowStockThreshold);
+            if (!result.Success)
+                return result;
+
+            return ServiceResult.Ok(LanguageHelper.T("Settings saved.", "تم حفظ الإعدادات."));
+        }
+
         public ServiceResult SetLowStockThreshold(int? threshold)
         {
             if (!threshold.HasValue || threshold < 0 || threshold > MaxLowStockThreshold)
                 return ServiceResult.Fail(LanguageHelper.T(
                     "Enter a whole number from 0 to " + MaxLowStockThreshold + ".",
-                    "أدخل رقماً صحيحاً من 0 إلى " + MaxLowStockThreshold + "."));
+                    "أدخل رقماً صحيحاً من 0 إلى " + MaxLowStockThreshold + "."), "LowStockThreshold");
 
             var text = threshold.Value.ToString(CultureInfo.InvariantCulture);
             var row = db.AppSettings.FirstOrDefault(s => s.Key == LowStockKey);
